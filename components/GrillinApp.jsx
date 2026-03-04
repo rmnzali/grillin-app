@@ -315,10 +315,9 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
 
   const handleClick = (item) => { if(!item.available||item.outOfStock)return; if(needsPopup(item))setPopupItem(item); else addItem(item,{val:null,num:parseFloat(item.price)||0}); };
   const cartKey = (item,variant) => `${item.id}__${variant||""}`;
-  const addItem = (item,choice) => { const key=cartKey(item,choice.val); setCart(prev=>{const ex=prev.find(c=>c.key===key); return ex?prev.map(c=>c.key===key?{...c,qty:c.qty+1}:c):[...prev,{...item,key,variant:choice.val,unitPrice:choice.num,qty:1,itemNote:""}];}); };
+  const addItem = (item,choice) => { const key=cartKey(item,choice.val); setCart(prev=>{const ex=prev.find(c=>c.key===key); return ex?prev.map(c=>c.key===key?{...c,qty:c.qty+1}:c):[...prev,{...item,key,variant:choice.val,unitPrice:choice.num,qty:1}];}); };
   const confirmOption = (item,choice) => { addItem(item,choice); setPopupItem(null); };
   const changeQty = (key,d) => setCart(prev=>prev.map(c=>c.key===key?{...c,qty:c.qty+d}:c).filter(c=>c.qty>0));
-  const updateItemNote = (key,note) => setCart(prev=>prev.map(c=>c.key===key?{...c,itemNote:note}:c));
   const itemQty = (item) => cart.filter(c=>c.id===item.id).reduce((s,c)=>s+c.qty,0);
   const subtotal = cart.reduce((s,c)=>s+c.unitPrice*c.qty,0);
   const discountPct = settings.offerEnabled ? (settings.offerPercent || 0) : 0;
@@ -333,7 +332,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
   const placeOrder = async () => {
     const order = {id:Date.now(),num:orderNum,customer:form.name,phone:form.phone,
       address:form.type==="Delivery"?fullAddress(form.addr):null,addr:form.type==="Delivery"?form.addr:null,
-      type:form.type,notes:form.addr.landmark||"",items:cart.map(c=>({name:cleanName(c.name),variant:c.variant,qty:c.qty,unitPrice:c.unitPrice,itemNote:c.itemNote||""})),
+      type:form.type,notes:form.notes||"",items:cart.map(c=>({name:cleanName(c.name),variant:c.variant,qty:c.qty,unitPrice:c.unitPrice})),
       total,status:"New",placedAt:new Date()};
     await insertOrder(order);
     await upsertCustomer({phone:form.phone,name:form.name,...(form.type==="Delivery"?form.addr:{})});
@@ -344,10 +343,10 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
   const CartBody = () => (<>
     <div className="chead"><h2>Your Order</h2><p>{totalItems===0?"No items yet":`${totalItems} item${totalItems>1?"s":""}`}</p></div>
     <div className="cbody">{cart.length===0?<div className="cempty"><div className="cempty-icon">🛒</div><p>Add items from the menu</p></div>
-      :cart.map(item=>(<div key={item.key} className="ci"><div className="ci-i"><div className="ci-n">{cleanName(item.name)}</div>{item.variant&&<div className="ci-v">{item.variant}</div>}<div className="ci-p">₹{item.unitPrice} × {item.qty} = ₹{(item.unitPrice*item.qty).toFixed(0)}</div>
-      <input className="ci-note-input" placeholder="Special instructions for this item…" value={item.itemNote||""} onChange={e=>updateItemNote(item.key,e.target.value)} onClick={e=>e.stopPropagation()}/></div>
+      :cart.map(item=>(<div key={item.key} className="ci"><div className="ci-i"><div className="ci-n">{cleanName(item.name)}</div>{item.variant&&<div className="ci-v">{item.variant}</div>}<div className="ci-p">₹{item.unitPrice} × {item.qty} = ₹{(item.unitPrice*item.qty).toFixed(0)}</div></div>
       <div className="qc"><button className="qb" onClick={()=>changeQty(item.key,-1)}>−</button><span className="qn">{item.qty}</span><button className="qb" onClick={()=>changeQty(item.key,1)}>+</button></div></div>))}</div>
     {cart.length>0&&<div className="cfoot">
+      <div style={{marginBottom:".6rem"}}><input className="fi" style={{fontSize:".78rem",padding:".45rem .7rem"}} placeholder="Special instructions for the kitchen…" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></div>
       <div className="ctotal" style={{fontSize:".82rem",fontWeight:500}}><span>Subtotal</span><span>₹{subtotal.toFixed(0)}</span></div>
       {discountPct>0&&<div className="discount-line"><span>Discount ({discountPct}%)</span><span>-₹{discountAmt.toFixed(0)}</span></div>}
       <div className="ctotal" style={{fontSize:".78rem",color:"var(--m)",fontWeight:400}}><span>GST (5%)</span><span>₹{gstAmt.toFixed(0)}</span></div>
@@ -358,6 +357,8 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
 
   return (<>
     <nav className="nav"><div className="nav-logo"><img src={LOGO_SRC} alt="Grillin'"/></div><div className="nav-right"><div className="sb"><span style={{color:"var(--m)",fontSize:".9rem"}}>🔍</span><input placeholder="Search menu…" value={search} onChange={e=>setSearch(e.target.value)}/></div></div></nav>
+    {settings.offerEnabled&&discountPct>0&&<div style={{background:"linear-gradient(90deg,#c0392b,#e74c3c)",padding:".6rem 1rem",textAlign:"center",fontSize:".85rem",fontWeight:600,color:"white",letterSpacing:".02em"}}>🎉 Order From Our Website — Get <span style={{fontSize:"1.05rem",textDecoration:"underline"}}>{discountPct}% Off</span> Your Order!</div>}
+    {discountPct>0&&<div style={{background:"linear-gradient(135deg,#c0392b,#a93226)",padding:".65rem 1.25rem",textAlign:"center"}}><div style={{fontSize:".95rem",fontWeight:700,color:"white",marginBottom:".1rem"}}>Order From Our Website</div><div style={{fontSize:".82rem",color:"rgba(255,255,255,.85)"}}>Get <strong>{discountPct}% Off</strong> Your Order</div></div>}
     <div className="layout">
       <div className="sidebar"><div className="slbl">Categories</div><button className={`cbtn ${activeCat==="All"&&!search?"active":""}`} onClick={()=>{setActiveCat("All");setSearch("");}}>All Items</button>
         {cats.map(cat=><button key={cat} className={`cbtn ${activeCat===cat&&!search?"active":""}`} onClick={()=>{setActiveCat(cat);setSearch("");}}>{cat}</button>)}</div>
@@ -393,7 +394,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
         <div className="fg"><label className="fl">Place / Area *</label><input className="fi" value={form.addr.place} onChange={e=>setAddr("place",e.target.value)}/></div>
         <div className="fg" style={{marginBottom:0}}><label className="fl">Address Instructions</label><input className="fi" value={form.addr.landmark} onChange={e=>setAddr("landmark",e.target.value)} placeholder="Gate code, directions, etc."/></div></div>}
       {deliveryShort&&<div className="del-warn">⚠️ Minimum delivery order is <strong>₹{DELIVERY_MIN}</strong> — add ₹{Math.ceil(DELIVERY_MIN-subtotal)} more</div>}
-      <div className="osb">{cart.map(i=><div key={i.key} className="osi"><span>{cleanName(i.name)}{i.variant?` (${i.variant})`:""} ×{i.qty}{i.itemNote?` — ${i.itemNote}`:""}</span><span>₹{(i.unitPrice*i.qty).toFixed(0)}</span></div>)}
+      <div className="osb">{cart.map(i=><div key={i.key} className="osi"><span>{cleanName(i.name)}{i.variant?` (${i.variant})`:""} ×{i.qty}</span><span>₹{(i.unitPrice*i.qty).toFixed(0)}</span></div>)}
         {discountPct>0&&<div className="osi" style={{color:"var(--g)"}}><span>Discount ({discountPct}%)</span><span>-₹{discountAmt.toFixed(0)}</span></div>}
         <div className="osi"><span>GST (5%)</span><span>₹{gstAmt.toFixed(0)}</span></div>
         <div className="ost"><span>Total</span><span>₹{total.toFixed(0)}</span></div></div>
@@ -501,9 +502,6 @@ function SettingsPanel({ settings, setSettings, adminPassword, setAdminPassword 
       <button className="ba" onClick={changePassword}>Update Password</button>
     </div>}
 
-    <div className="setting-row"><div><div className="setting-label">🗑️ Require Password to Delete Items</div><div className="setting-desc">Admin must enter password before deleting a menu item</div></div>
-      <Toggle on={settings.deleteProtection} onToggle={()=>toggleSetting("deleteProtection","delete_protection")}/></div>
-
     <div className="setting-row"><div><div className="setting-label">🛵 Minimum ₹300 for Delivery</div><div className="setting-desc">Require a minimum order of ₹300 for delivery orders</div></div>
       <Toggle on={settings.deliveryMinEnabled} onToggle={()=>toggleSetting("deliveryMinEnabled","delivery_min_enabled")}/></div>
 
@@ -545,11 +543,7 @@ function AdminPanel({ menuItems, setMenuItems, orders, setOrders, onLogout, sett
   const togOos=async(id)=>{const item=menuItems.find(i=>i.id===id);if(!item)return;const updated={...item,outOfStock:!item.outOfStock};setMenuItems(p=>p.map(i=>i.id===id?updated:i));await updateMenuItem(updated);};
 
   const requestDelete = (id) => {
-    if (settings.deleteProtection) {
-      setDelPwdModal(id); setDelPwd(""); setDelPwdErr(false);
-    } else {
-      confirmDelete(id);
-    }
+    setDelPwdModal(id); setDelPwd(""); setDelPwdErr(false);
   };
   const confirmDelete = async (id) => {
     setMenuItems(p=>p.filter(i=>i.id!==id)); await deleteMenuItem(id); setDelPwdModal(null);
@@ -613,11 +607,25 @@ function AdminPanel({ menuItems, setMenuItems, orders, setOrders, onLogout, sett
         {bParsed.length>0&&<div className="bprev">{bParsed.map(p=><div key={p.line} className="bpi"><span className={p.ok?"pok":"perr"}>{p.ok?"✓":"✗"}</span><span>{p.ok?`${p.name} — ${p.category} — ₹${p.price}`:`Line ${p.line}: ${p.err}`}</span></div>)}</div>}
         <div className="bacts"><button className="ba" onClick={importBulk} disabled={!bParsed.some(p=>p.ok)}>Import Valid Items</button><button className="bg" onClick={()=>{setBulk("");setBParsed([]);}}>Clear</button>{bParsed.length>0&&<span className="bnote">{bParsed.filter(p=>p.ok).length} valid items</span>}</div></div>}
     </div>
-    {showAdd&&<div className="mov"><div className="modal"><h2>Add Menu Item</h2>
-      <div className="fr"><div className="fg"><label className="fl">Name *</label><input className="fi" value={newItem.name} onChange={e=>setNewItem({...newItem,name:e.target.value})}/></div><div className="fg"><label className="fl">Emoji</label><input className="fi" value={newItem.emoji} onChange={e=>setNewItem({...newItem,emoji:e.target.value})}/></div></div>
-      <div className="fr"><div className="fg"><label className="fl">Category *</label><select className="fi" value={newItem.category} onChange={e=>setNewItem({...newItem,category:e.target.value})}>{cats.map(c=><option key={c}>{c}</option>)}</select></div><div className="fg"><label className="fl">Price *</label><input className="fi" value={newItem.price} onChange={e=>setNewItem({...newItem,price:e.target.value})}/></div></div>
-      <div className="fg"><label className="fl">Description</label><input className="fi" value={newItem.description} onChange={e=>setNewItem({...newItem,description:e.target.value})}/></div>
-      <div className="macts"><button className="bg" onClick={()=>setShowAdd(false)}>Cancel</button><button className="ba" onClick={addIt} disabled={!newItem.name||!newItem.price}>Add Item</button></div></div></div>}
+    {showAdd&&<div className="mov"><div className="modal" style={{maxHeight:"90vh",overflowY:"auto"}}><h2>Add Menu Item</h2>
+      <div className="fg"><label className="fl">Item Name *</label><input className="fi" value={newItem.name} onChange={e=>setNewItem({...newItem,name:e.target.value})} placeholder="e.g. Chicken Tikka"/></div>
+      <div className="fr"><div className="fg"><label className="fl">Category *</label><div style={{display:"flex",gap:".4rem"}}><select className="fi" style={{flex:1}} value={newItem.category} onChange={e=>setNewItem({...newItem,category:e.target.value})}><option value="">Select…</option>{cats.map(c=><option key={c}>{c}</option>)}</select><input className="fi" style={{flex:1}} value={newItem.newCat||""} onChange={e=>setNewItem({...newItem,newCat:e.target.value,category:e.target.value})} placeholder="Or new category"/></div></div>
+      <div className="fg"><label className="fl">Price *</label><input className="fi" value={newItem.price} onChange={e=>setNewItem({...newItem,price:e.target.value})} placeholder="e.g. 250 or 150/280"/></div></div>
+      <div className="fg"><label className="fl">Description</label><input className="fi" value={newItem.description} onChange={e=>setNewItem({...newItem,description:e.target.value})} placeholder="Short description (optional)"/></div>
+      <div className="fg"><label className="fl">Variation Type</label><div style={{display:"flex",gap:".4rem",flexWrap:"wrap"}}>
+        {[["none","None"],["halfFull","Half / Full"],["dryGravy","Dry / Gravy"],["choices","Choices"],["addon","Add-on"]].map(([val,lbl])=>
+          <div key={val} onClick={()=>setNewItem({...newItem,popup:val==="none"?undefined:val})} style={{padding:".38rem .7rem",borderRadius:8,border:`2px solid ${(newItem.popup||"none")===val||(val==="none"&&!newItem.popup)?"var(--a)":"var(--b)"}`,background:(newItem.popup||"none")===val||(val==="none"&&!newItem.popup)?"rgba(192,57,43,.1)":"var(--s2)",cursor:"pointer",fontSize:".78rem"}}>{lbl}</div>
+        )}</div></div>
+      {(newItem.popup==="choices"||newItem.popup==="addon")&&<div className="fg"><label className="fl">{newItem.popup==="choices"?"Choice Options":"Add-on Options"}</label>
+        <div style={{display:"flex",flexDirection:"column",gap:".4rem",marginBottom:".5rem"}}>{(newItem.options||[]).map((o,i)=>
+          <div key={i} style={{display:"flex",gap:".4rem",alignItems:"center"}}><input className="fi" style={{flex:2}} value={o.label} onChange={e=>{const opts=[...(newItem.options||[])];opts[i]={...opts[i],label:e.target.value};setNewItem({...newItem,options:opts});}} placeholder="Label"/><input className="fi" style={{flex:1}} value={o.price} onChange={e=>{const opts=[...(newItem.options||[])];opts[i]={...opts[i],price:Number(e.target.value)||0};setNewItem({...newItem,options:opts});}} placeholder="Price"/><button onClick={()=>{const opts=(newItem.options||[]).filter((_,j)=>j!==i);setNewItem({...newItem,options:opts});}} style={{background:"transparent",border:"none",color:"#e07070",cursor:"pointer",fontSize:"1rem"}}>✕</button></div>
+        )}</div><button onClick={()=>setNewItem({...newItem,options:[...(newItem.options||[]),{label:"",price:0}]})} style={{background:"var(--s2)",border:"1px dashed var(--b2)",borderRadius:6,padding:".35rem",width:"100%",color:"var(--m)",cursor:"pointer",fontSize:".78rem"}}>+ Add Option</button></div>}
+      <div className="macts"><button className="bg" onClick={()=>{setShowAdd(false);setNewItem({name:"",category:"",price:"",description:"",emoji:""});}}>Cancel</button><button className="ba" onClick={()=>{
+        if(!newItem.name||!newItem.price)return;
+        const item={name:newItem.name,category:newItem.category||newItem.newCat||"Uncategorized",price:newItem.price,description:newItem.description||"",emoji:newItem.emoji||"",id:Date.now(),available:true,outOfStock:false};
+        if(newItem.popup){item.popup=newItem.popup;if(newItem.popup==="choices")item.choices=(newItem.options||[]).filter(o=>o.label.trim());if(newItem.popup==="addon")item.addons=(newItem.options||[]).filter(o=>o.label.trim());}
+        setMenuItems(p=>[...p,item]);insertMenuItem(item);setShowAdd(false);setNewItem({name:"",category:"",price:"",description:"",emoji:""});
+      }} disabled={!newItem.name||!newItem.price}>Add Item</button></div></div></div>}
     {editItem&&<EditItemModal item={editItem} onSave={saveEdit} onClose={()=>setEditItem(null)}/>}
     {delPwdModal&&<div className="mov"><div className="modal"><h2>Confirm Delete</h2>
       <p style={{color:"var(--m)",fontSize:".85rem",marginBottom:"1rem"}}>Enter admin password to delete this item</p>
@@ -700,7 +708,8 @@ export default function GrillinApp() {
 
   // Pending alert state
   const [alertOrder, setAlertOrder] = useState(null);
-  const alertIntervalRef = useState(null);
+  const alertIntervalRef = useCallback(() => {}, []);
+  alertIntervalRef.current = alertIntervalRef.current || { id: null };
 
   // Loud repeating alarm sound
   const playLoudAlarm = useCallback(() => {
@@ -716,24 +725,25 @@ export default function GrillinApp() {
         osc.start(ctx.currentTime + start);
         osc.stop(ctx.currentTime + start + dur);
       };
-      playTone(800, 0, 0.12, 0.5); playTone(1000, 0.15, 0.12, 0.5);
-      playTone(800, 0.3, 0.12, 0.5); playTone(1000, 0.45, 0.12, 0.5);
-      playTone(1200, 0.6, 0.3, 0.6);
-    } catch(e) {}
+      playTone(800, 0, 0.12, 0.6); playTone(1000, 0.15, 0.12, 0.6);
+      playTone(800, 0.3, 0.12, 0.6); playTone(1000, 0.45, 0.12, 0.6);
+      playTone(1200, 0.6, 0.3, 0.7);
+    } catch(e) { console.log("Audio error:", e); }
   }, []);
 
   const startAlarm = useCallback((order) => {
     setAlertOrder(order);
     playLoudAlarm();
-    if (alertIntervalRef[0]) clearInterval(alertIntervalRef[0]);
-    alertIntervalRef[0] = setInterval(() => { playLoudAlarm(); }, 3000);
+    if (alertIntervalRef.current.id) clearInterval(alertIntervalRef.current.id);
+    const id = setInterval(() => { playLoudAlarm(); }, 2500);
+    alertIntervalRef.current.id = id;
     if ("Notification" in window && Notification.permission === "granted") {
       new Notification("NEW ORDER #" + order.num, { body: order.customer + " — ₹" + parseFloat(order.total).toFixed(0), requireInteraction: true });
     }
   }, [playLoudAlarm, alertIntervalRef]);
 
   const acknowledgeOrder = useCallback(() => {
-    if (alertIntervalRef[0]) { clearInterval(alertIntervalRef[0]); alertIntervalRef[0] = null; }
+    if (alertIntervalRef.current.id) { clearInterval(alertIntervalRef.current.id); alertIntervalRef.current.id = null; }
     setAlertOrder(null);
   }, [alertIntervalRef]);
 
@@ -743,7 +753,7 @@ export default function GrillinApp() {
     }
   }, [page]);
 
-  useEffect(() => { return () => { if (alertIntervalRef[0]) clearInterval(alertIntervalRef[0]); }; }, [alertIntervalRef]);
+  useEffect(() => { return () => { if (alertIntervalRef.current && alertIntervalRef.current.id) clearInterval(alertIntervalRef.current.id); }; }, [alertIntervalRef]);
 
   // Real-time subscription for orders
   useEffect(() => {

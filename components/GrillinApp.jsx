@@ -216,12 +216,12 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 .chkbtn:hover:not(:disabled){background:var(--a2)}.chkbtn:disabled{opacity:.3;cursor:not-allowed}
 
 /* Footer */
-.access-footer{display:block;width:100%;text-align:center;padding:.4rem;background:transparent;border:none;color:var(--m);font-family:var(--font);font-size:.6rem;cursor:pointer;margin-top:.3rem;transition:color .15s;opacity:.6}
+.access-footer{display:block;width:100%;text-align:center;padding:.4rem;background:transparent;border:none;color:var(--m);font-family:var(--font);font-size:.6rem;cursor:pointer;margin-top:.3rem;transition:color .15s;opacity:.4}
 .access-footer:hover{color:var(--t);opacity:1}
 .contact-footer{border:none;padding:1.5rem 1rem 1rem;text-align:center;background:transparent}
-.contact-footer a{color:var(--m);text-decoration:none;font-size:.7rem;font-weight:400;opacity:.6}.contact-footer a:hover{text-decoration:underline;color:var(--t2);opacity:1}
-.contact-row{display:flex;align-items:center;justify-content:center;gap:.5rem;margin-bottom:.25rem;font-size:.7rem;color:var(--m);opacity:.6}
-.contact-row a{color:var(--m);text-decoration:none}.contact-row a:hover{text-decoration:underline;color:var(--t2)}
+.contact-footer a{color:var(--t2);text-decoration:none;font-size:.72rem;font-weight:400}.contact-footer a:hover{text-decoration:underline;color:var(--t)}
+.contact-row{display:flex;align-items:center;justify-content:center;gap:.5rem;margin-bottom:.25rem;font-size:.72rem;color:var(--t2);opacity:.8}
+.contact-row a{color:var(--t2);text-decoration:none}.contact-row a:hover{text-decoration:underline;color:var(--t)}
 
 /* Drawer (mobile cart) */
 .dov{position:fixed;inset:0;z-index:160;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .2s}.dov.open{opacity:1;pointer-events:all}

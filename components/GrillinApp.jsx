@@ -43,6 +43,18 @@ const CartIcon = () => (
   </svg>
 );
 
+const SearchIcon = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+  </svg>
+);
+
+const ClearIcon = () => (
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+  </svg>
+);
+
 const S = `
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
@@ -62,8 +74,8 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 .sticky-top{position:sticky;top:0;z-index:100;background:var(--bg);box-shadow:0 4px 16px rgba(0,0,0,.5)}
 .nav{padding:.85rem .5rem .5rem;display:flex;align-items:center;justify-content:space-between}
 @media(max-width:700px){.nav{padding:.85rem 1.25rem .5rem}}
-.nav-logo img{height:100px;width:auto;object-fit:contain;display:block}
-@media(max-width:580px){.nav-logo img{height:52px}}
+.nav-logo img{height:120px;width:auto;object-fit:contain;display:block}
+@media(max-width:580px){.nav-logo img{height:64px}}
 .cart-pill{display:flex;align-items:center;gap:.45rem;background:var(--a);color:white;border:none;border-radius:26px;padding:.5rem 1.1rem;font-family:var(--font);font-size:.85rem;font-weight:700;cursor:pointer;position:relative;transition:all .15s}
 .cart-pill:hover{background:var(--a2)}
 .cart-pill svg{flex-shrink:0}
@@ -74,6 +86,9 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 .search-box:focus-within{border-color:rgba(220,38,38,.35)}
 .search-box input{background:transparent;border:none;outline:none;color:var(--t);font-family:var(--font);font-size:.85rem;width:100%}
 .search-box input::placeholder{color:var(--m)}
+.search-icon{color:var(--m);flex-shrink:0;display:flex;align-items:center}
+.search-clear{background:none;border:none;color:var(--m);cursor:pointer;padding:2px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:color .15s;font-size:0}
+.search-clear:hover{color:var(--t)}
 .cat-strip{display:flex;gap:.4rem;padding:.15rem .5rem .7rem;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 @media(max-width:700px){.cat-strip{padding:.15rem 1.25rem .7rem}}
 .cat-strip::-webkit-scrollbar{display:none}
@@ -425,7 +440,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
             <div className="nav-logo"><img src={LOGO_SRC} alt="Grillin'" onError={e=>{e.target.style.display='none'}}/></div>
             {totalItems>0&&<button className="cart-pill" onClick={()=>setDrawerOpen(true)}><CartIcon/> ₹{total.toFixed(0)}<span className="cart-badge">{totalItems}</span></button>}
           </nav>
-          <div className="search-wrap"><div className="search-box"><span style={{color:"var(--m)",fontSize:".92rem"}}>🔍</span><input placeholder="What are you craving?" value={search} onChange={e=>setSearch(e.target.value)}/></div></div>
+          <div className="search-wrap"><div className="search-box"><span className="search-icon"><SearchIcon/></span><input placeholder="What are you craving?" value={search} onChange={e=>setSearch(e.target.value)}/>{search&&<button className="search-clear" onClick={()=>setSearch("")}><ClearIcon/></button>}</div></div>
           <div className="cat-strip">
             <button className={`cat-pill ${activeCat==="All"&&!search?"active":""}`} onClick={()=>scrollToCat("All")}>All</button>
             {cats.map(cat=><button key={cat} className={`cat-pill ${activeCat===cat&&!search?"active":""}`} onClick={()=>scrollToCat(cat)}>{cat}</button>)}

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import {
   fetchMenuItems, updateMenuItem, insertMenuItem, deleteMenuItem, bulkInsertMenuItems,
   fetchOrders, insertOrder, updateOrderStatus, deleteOrder, deleteDoneOrders,
@@ -61,7 +61,8 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 /* ── STICKY TOP: nav + search + pills ── */
 .sticky-top{position:sticky;top:0;z-index:100;background:var(--bg);box-shadow:0 4px 16px rgba(0,0,0,.5)}
 .nav{padding:.85rem 1.25rem .5rem;display:flex;align-items:center;justify-content:space-between}
-.nav-logo img{height:52px;width:auto;object-fit:contain;display:block}
+.nav-logo img{height:72px;width:auto;object-fit:contain;display:block}
+@media(max-width:580px){.nav-logo img{height:48px}}
 .cart-pill{display:flex;align-items:center;gap:.45rem;background:var(--a);color:white;border:none;border-radius:26px;padding:.5rem 1.1rem;font-family:var(--font);font-size:.85rem;font-weight:700;cursor:pointer;position:relative;transition:all .15s}
 .cart-pill:hover{background:var(--a2)}
 .cart-pill svg{flex-shrink:0}
@@ -78,10 +79,11 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 .cat-pill.active{background:var(--a);border-color:var(--a);color:white;font-weight:600}
 
 /* ── LAYOUT ── */
-.layout{display:grid;grid-template-columns:1fr 310px;height:100vh;overflow:hidden}
-.main-col{display:flex;flex-direction:column;overflow:hidden}
+.layout{display:flex;justify-content:center;height:100vh;overflow:hidden;width:100%}
+.main-col{display:flex;flex-direction:column;overflow:hidden;flex:1;max-width:900px}
 .main-col .sticky-top{flex-shrink:0;position:relative}
 .menu-scroll{flex:1;overflow-y:auto}
+.cpanel{width:310px;flex-shrink:0}
 
 /* ── MENU ── */
 .menu-area{padding:0 1.25rem 2rem}
@@ -89,8 +91,12 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 .sec-head{font-family:var(--font);font-size:1.15rem;font-weight:800;color:var(--a);margin:1.4rem 0 .7rem;padding-bottom:.4rem;border-bottom:2px solid rgba(220,38,38,.2);letter-spacing:-.01em}
 .sec-head:first-child{margin-top:.3rem}
 
+/* ── MENU GRID: 2 columns on desktop ── */
+.mcard-grid{display:grid;grid-template-columns:1fr 1fr;gap:.55rem}
+@media(max-width:700px){.mcard-grid{grid-template-columns:1fr}}
+
 /* ── MENU CARD ── */
-.mcard{background:var(--s);border:1px solid var(--b);border-radius:var(--radius);padding:1rem;margin-bottom:.55rem;display:flex;gap:.85rem;align-items:flex-start;cursor:pointer;transition:all .15s}
+.mcard{background:var(--s);border:1px solid var(--b);border-radius:var(--radius);padding:1rem;display:flex;gap:.85rem;align-items:flex-start;cursor:pointer;transition:all .15s}
 .mcard:hover{border-color:var(--b2)}
 .mcard.unavail{opacity:.35;cursor:not-allowed;filter:grayscale(.4)}.mcard.unavail:hover{border-color:var(--b)}
 .mcard.oos{cursor:not-allowed;opacity:.65}.mcard.oos:hover{border-color:var(--b)}
@@ -277,7 +283,7 @@ tr:last-child td{border-bottom:none}tr:hover td{background:rgba(255,255,255,.015
 .toggle-switch.on{background:var(--a)}.toggle-switch.off{background:var(--b2)}
 .toggle-dot{position:absolute;top:3px;width:18px;height:18px;border-radius:50%;background:white;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
 .toggle-switch.on .toggle-dot{left:23px}.toggle-switch.off .toggle-dot{left:3px}
-@media(max-width:900px){.layout{grid-template-columns:1fr}.cpanel{display:none!important}.astats{grid-template-columns:1fr 1fr}.ord-grid{grid-template-columns:1fr}}
+@media(max-width:900px){.cpanel{display:none!important}.main-col{max-width:100%}.astats{grid-template-columns:1fr 1fr}.ord-grid{grid-template-columns:1fr}}
 @media(max-width:580px){.adm-inner{padding:1rem}.fr{grid-template-columns:1fr}.modal{padding:1.35rem 1.1rem}}
 `;
 
@@ -353,10 +359,19 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
     setForm(f=>({...f,phone:val})); setAutoFilled(false);
     if (val.length >= 10) { const cust = await findCustomerByPhone(val); if (cust) { setForm(f=>({...f,phone:val,name:cust.name||f.name,addr:{house:cust.house||"",apartment:cust.apartment||"",street:cust.street||"",place:cust.place||"",landmark:cust.landmark||""}})); setAutoFilled(true); } }
   };
+  const menuScrollEl = useRef(null);
+  const scrollToCat = (cat) => {
+    setActiveCat(cat); setSearch("");
+    if (cat === "All") { if(menuScrollEl.current) menuScrollEl.current.scrollTo({top:0,behavior:"smooth"}); return; }
+    setTimeout(() => {
+      const el = document.getElementById(`cat-${cat.replace(/\s+/g,"-")}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  };
   const filtered = useMemo(() => {
     if (search.trim()) { const q=search.toLowerCase(); return menuItems.filter(i=>i.name.toLowerCase().includes(q)||i.category.toLowerCase().includes(q)); }
-    return activeCat==="All" ? menuItems : menuItems.filter(i=>i.category===activeCat);
-  }, [menuItems,search,activeCat]);
+    return menuItems;
+  }, [menuItems,search]);
   const grouped = useMemo(() => filtered.reduce((acc,item)=>{acc[item.category]=acc[item.category]||[];acc[item.category].push(item);return acc;},{}), [filtered]);
   const handleClick = (item) => { if(!item.available||item.outOfStock)return; if(needsPopup(item))setPopupItem(item); else addItem(item,{val:null,num:parseFloat(item.price)||0}); };
   const cartKey = (item,variant) => `${item.id}__${variant||""}`;
@@ -407,17 +422,18 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
           </nav>
           <div className="search-wrap"><div className="search-box"><span style={{color:"var(--m)",fontSize:".92rem"}}>🔍</span><input placeholder="What are you craving?" value={search} onChange={e=>setSearch(e.target.value)}/></div></div>
           <div className="cat-strip">
-            <button className={`cat-pill ${activeCat==="All"&&!search?"active":""}`} onClick={()=>{setActiveCat("All");setSearch("");}}>All</button>
-            {cats.map(cat=><button key={cat} className={`cat-pill ${activeCat===cat&&!search?"active":""}`} onClick={()=>{setActiveCat(cat);setSearch("");}}>{cat}</button>)}
+            <button className={`cat-pill ${activeCat==="All"&&!search?"active":""}`} onClick={()=>scrollToCat("All")}>All</button>
+            {cats.map(cat=><button key={cat} className={`cat-pill ${activeCat===cat&&!search?"active":""}`} onClick={()=>scrollToCat(cat)}>{cat}</button>)}
           </div>
         </div>
 
         {/* SCROLLABLE MENU */}
-        <div className="menu-scroll">
+        <div className="menu-scroll" ref={menuScrollEl}>
           <div className="menu-area">
             {search&&<div className="snote">{filtered.length} result{filtered.length!==1?"s":""} for &ldquo;{search}&rdquo;</div>}
-            {Object.entries(grouped).map(([cat,items])=>(<div key={cat}>
+            {Object.entries(grouped).map(([cat,items])=>(<div key={cat} id={`cat-${cat.replace(/\s+/g,"-")}`}>
               <div className="sec-head">{cat}</div>
+              <div className="mcard-grid">
               {items.map(item=>{const qty=itemQty(item);const tag=tagLabel(item);return(
                 <div key={item.id} className={`mcard ${!item.available?"unavail":item.outOfStock?"oos":""}`} onClick={()=>handleClick(item)}>
                   <div className="mc-info">
@@ -441,6 +457,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
                   </div>
                 </div>
               );})}
+              </div>
             </div>))}
             {filtered.length===0&&<div style={{textAlign:"center",padding:"3rem",color:"var(--m)"}}>No items found</div>}
             <div className="contact-footer">

@@ -62,8 +62,8 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 .sticky-top{position:sticky;top:0;z-index:100;background:var(--bg);box-shadow:0 4px 16px rgba(0,0,0,.5)}
 .nav{padding:.85rem .5rem .5rem;display:flex;align-items:center;justify-content:space-between}
 @media(max-width:700px){.nav{padding:.85rem 1.25rem .5rem}}
-.nav-logo img{height:72px;width:auto;object-fit:contain;display:block}
-@media(max-width:580px){.nav-logo img{height:48px}}
+.nav-logo img{height:100px;width:auto;object-fit:contain;display:block}
+@media(max-width:580px){.nav-logo img{height:52px}}
 .cart-pill{display:flex;align-items:center;gap:.45rem;background:var(--a);color:white;border:none;border-radius:26px;padding:.5rem 1.1rem;font-family:var(--font);font-size:.85rem;font-weight:700;cursor:pointer;position:relative;transition:all .15s}
 .cart-pill:hover{background:var(--a2)}
 .cart-pill svg{flex-shrink:0}
@@ -83,7 +83,7 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 
 /* ── LAYOUT ── */
 .layout{display:flex;justify-content:center;height:100vh;overflow:hidden;width:100%}
-.main-col{display:flex;flex-direction:column;overflow:hidden;flex:1;max-width:1400px;padding:0 3rem}
+.main-col{display:flex;flex-direction:column;overflow:hidden;flex:1;padding:0 5vw}
 .main-col .sticky-top{flex-shrink:0;position:relative}
 .menu-scroll{flex:1;overflow-y:auto}
 .cpanel{display:none}
@@ -171,9 +171,9 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 .access-footer{display:block;width:100%;text-align:center;padding:.6rem;background:transparent;border:none;border-top:1px solid var(--b);color:var(--m);font-family:var(--font);font-size:.68rem;cursor:pointer;margin-top:1.5rem;transition:color .15s}
 .access-footer:hover{color:var(--t)}
 .contact-footer{border-top:1px solid var(--b);padding:1.2rem;margin-top:1.5rem;text-align:center}
-.contact-footer a{color:var(--a);text-decoration:none;font-size:.78rem;font-weight:500}.contact-footer a:hover{text-decoration:underline}
+.contact-footer a{color:var(--t2);text-decoration:none;font-size:.78rem;font-weight:500}.contact-footer a:hover{text-decoration:underline;color:var(--t)}
 .contact-row{display:flex;align-items:center;justify-content:center;gap:.5rem;margin-bottom:.35rem;font-size:.78rem;color:var(--m)}
-.contact-row a{color:var(--a);text-decoration:none}.contact-row a:hover{text-decoration:underline}
+.contact-row a{color:var(--t2);text-decoration:none}.contact-row a:hover{text-decoration:underline;color:var(--t)}
 
 /* Drawer (mobile cart) */
 .dov{position:fixed;inset:0;z-index:160;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .2s}.dov.open{opacity:1;pointer-events:all}

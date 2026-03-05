@@ -456,7 +456,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
     <div className="chead"><h2>Your Order</h2><p>{totalItems===0?"No items yet":`${totalItems} item${totalItems>1?"s":""}`}</p></div>
     <div className="cbody">{cart.length===0?<div className="cempty"><div className="cempty-icon"><svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{opacity:.4}}><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div><p>Add items from the menu</p></div>
       :cart.map(item=>(<div key={item.key} className="ci"><div className="ci-i"><div className="ci-n">{cleanName(item.name)}</div>{item.variant&&<div className="ci-v">{item.variant}</div>}<div className="ci-p">₹{item.unitPrice} × {item.qty} = ₹{(item.unitPrice*item.qty).toFixed(0)}</div>
-      <input className="ci-note-input" placeholder="Special instructions…" value={item.itemNote||""} onChange={e=>updateItemNote(item.key,e.target.value)} onClick={e=>e.stopPropagation()}/></div>
+      <input className="ci-note-input" placeholder="Special Note" value={item.itemNote||""} onChange={e=>updateItemNote(item.key,e.target.value)} onClick={e=>e.stopPropagation()}/></div>
       <div className="qc"><button className="qb" onClick={()=>changeQty(item.key,-1)}>−</button><span className="qn">{item.qty}</span><button className="qb" onClick={()=>changeQty(item.key,1)}>+</button></div></div>))}</div>
     {cart.length>0&&<div className="cfoot">
       <div className="ctotal" style={{fontSize:".78rem",fontWeight:500,opacity:.65}}><span>Subtotal</span><span>₹{subtotal.toFixed(0)}</span></div>
@@ -524,7 +524,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
         <div className="cp-body">
           {cart.length===0?<div className="cp-empty"><div className="cp-empty-icon" style={{opacity:.4}}><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div><p>Add items from the menu</p></div>
           :cart.map(item=>(<div key={item.key} className="cp-item"><div className="cp-item-info"><div className="cp-item-name">{cleanName(item.name)}</div>{item.variant&&<div className="cp-item-variant">{item.variant}</div>}<div className="cp-item-price">₹{item.unitPrice} × {item.qty} = ₹{(item.unitPrice*item.qty).toFixed(0)}</div>
-          <input className="cp-item-note" placeholder="Special instructions…" value={item.itemNote||""} onChange={e=>updateItemNote(item.key,e.target.value)} onClick={e=>e.stopPropagation()}/></div>
+          <input className="cp-item-note" placeholder="Special Note" value={item.itemNote||""} onChange={e=>updateItemNote(item.key,e.target.value)} onClick={e=>e.stopPropagation()}/></div>
           <div className="cp-qty"><button onClick={()=>changeQty(item.key,-1)}>−</button><span>{item.qty}</span><button onClick={()=>changeQty(item.key,1)}>+</button></div></div>))}
         </div>
         {cart.length>0&&<div className="cp-foot">

@@ -101,11 +101,36 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 .main-col{display:flex;flex-direction:column;overflow:hidden;flex:1;padding:0 5vw}
 .main-col .sticky-top{flex-shrink:0;position:relative}
 .menu-scroll{flex:1;overflow-y:auto}
-.cpanel{display:none}
-@media(max-width:900px){.main-col{padding:0}}
+
+/* ── SIDE CART (desktop) ── */
+.cpanel{width:340px;flex-shrink:0;background:var(--s);border-left:1px solid var(--b);display:flex;flex-direction:column;overflow:hidden}
+.cpanel .cp-header{padding:1.1rem 1.2rem;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between}
+.cpanel .cp-header h2{font-size:1.05rem;font-weight:800;display:flex;align-items:center;gap:.4rem}
+.cpanel .cp-close{background:none;border:none;color:var(--m);cursor:pointer;font-size:1rem;padding:4px}
+.cpanel .cp-close:hover{color:var(--t)}
+.cpanel .cp-body{flex:1;overflow-y:auto;padding:.5rem 1rem}
+.cpanel .cp-empty{text-align:center;padding:2.5rem 1rem;color:var(--m);font-size:.83rem}
+.cpanel .cp-empty-icon{font-size:2rem;margin-bottom:.4rem;opacity:.4}
+.cpanel .cp-foot{padding:.85rem 1rem;border-top:1px solid var(--b)}
+.cpanel .cp-item{display:flex;align-items:flex-start;gap:.5rem;padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cpanel .cp-item-info{flex:1;min-width:0}
+.cpanel .cp-item-name{font-size:.82rem;font-weight:600}
+.cpanel .cp-item-variant{font-size:.65rem;color:var(--a);margin-top:2px;font-weight:500}
+.cpanel .cp-item-price{font-size:.72rem;color:var(--m);margin-top:1px}
+.cpanel .cp-item-note{width:100%;padding:.28rem .45rem;background:var(--s2);border:1px solid var(--b);border-radius:4px;color:var(--t);font-family:var(--font);font-size:.65rem;outline:none;margin-top:3px}
+.cpanel .cp-item-note:focus{border-color:var(--a)}
+.cpanel .cp-item-note::placeholder{color:var(--m)}
+.cp-qty{display:flex;align-items:center;border:1px solid var(--a);border-radius:6px;overflow:hidden;flex-shrink:0}
+.cp-qty button{width:24px;height:24px;border:none;background:transparent;color:var(--a);font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cp-qty button:hover{background:rgba(220,38,38,.1)}
+.cp-qty span{font-family:var(--font);font-size:.75rem;font-weight:700;width:18px;text-align:center;color:var(--t)}
+
+@media(max-width:900px){.main-col{padding:0}.cpanel{display:none!important}}
 
 /* ── MENU ── */
-.menu-area{padding:0 .5rem 2rem}
+.menu-area{padding:0 .5rem 2rem;min-height:100%;display:flex;flex-direction:column}
+.menu-area .menu-content{flex:1}
+.menu-area .contact-footer{margin-top:auto}
 @media(max-width:700px){.menu-area{padding:0 1.25rem 2rem}}
 .snote{font-size:.78rem;color:var(--m);margin-bottom:.7rem}
 .sec-head{font-family:var(--font);font-size:1.3rem;font-weight:800;color:var(--a);margin:1.8rem 0 .85rem;padding-bottom:.5rem;border-bottom:2px solid rgba(220,38,38,.2);letter-spacing:-.01em}
@@ -303,7 +328,7 @@ tr:last-child td{border-bottom:none}tr:hover td{background:rgba(255,255,255,.015
 .toggle-switch.on{background:var(--a)}.toggle-switch.off{background:var(--b2)}
 .toggle-dot{position:absolute;top:3px;width:18px;height:18px;border-radius:50%;background:white;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
 .toggle-switch.on .toggle-dot{left:23px}.toggle-switch.off .toggle-dot{left:3px}
-@media(max-width:900px){.main-col{max-width:100%}.astats{grid-template-columns:1fr 1fr}.ord-grid{grid-template-columns:1fr}}
+@media(max-width:900px){.main-col{max-width:100%;padding:0}.cpanel{display:none!important}.astats{grid-template-columns:1fr 1fr}.ord-grid{grid-template-columns:1fr}}
 @media(max-width:580px){.adm-inner{padding:1rem}.fr{grid-template-columns:1fr}.modal{padding:1.35rem 1.1rem}}
 @media(max-width:768px){input,textarea,select,.fi,.ci-note-input,.search-box input,.bta{font-size:16px!important}}
 `;
@@ -451,6 +476,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
         {/* SCROLLABLE MENU */}
         <div className="menu-scroll" ref={menuScrollEl}>
           <div className="menu-area">
+            <div className="menu-content">
             {search&&<div className="snote">{filtered.length} result{filtered.length!==1?"s":""} for &ldquo;{search}&rdquo;</div>}
             {Object.entries(grouped).map(([cat,items])=>(<div key={cat} id={`cat-${cat.replace(/\s+/g,"-")}`}>
               <div className="sec-head">{cat}</div>
@@ -481,6 +507,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
               </div>
             </div>))}
             {filtered.length===0&&<div style={{textAlign:"center",padding:"3rem",color:"var(--m)"}}>No items found</div>}
+            </div>
             <div className="contact-footer">
               <div className="contact-row">📞 <a href="tel:9901538782">9901538782</a> · <a href="tel:7259020939">7259020939</a></div>
               <div className="contact-row">📍 <a href="https://maps.app.goo.gl/dvy2KWqhZ542ABgE8?g_st=ic" target="_blank" rel="noopener noreferrer">Vignan Nagar Main Rd, Bangalore</a></div>
@@ -489,9 +516,27 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
           </div>
         </div>
       </div>
+
+      {/* Desktop side cart panel */}
+      <div className="cpanel">
+        <div className="cp-header"><h2>🛒 Your Order</h2></div>
+        <div className="cp-body">
+          {cart.length===0?<div className="cp-empty"><div className="cp-empty-icon">🍖</div><p>Add items from the menu</p></div>
+          :cart.map(item=>(<div key={item.key} className="cp-item"><div className="cp-item-info"><div className="cp-item-name">{cleanName(item.name)}</div>{item.variant&&<div className="cp-item-variant">{item.variant}</div>}<div className="cp-item-price">₹{item.unitPrice} × {item.qty} = ₹{(item.unitPrice*item.qty).toFixed(0)}</div>
+          <input className="cp-item-note" placeholder="Special instructions…" value={item.itemNote||""} onChange={e=>updateItemNote(item.key,e.target.value)} onClick={e=>e.stopPropagation()}/></div>
+          <div className="cp-qty"><button onClick={()=>changeQty(item.key,-1)}>−</button><span>{item.qty}</span><button onClick={()=>changeQty(item.key,1)}>+</button></div></div>))}
+        </div>
+        {cart.length>0&&<div className="cp-foot">
+          <div className="ctotal" style={{fontSize:".78rem",fontWeight:500,opacity:.65}}><span>Subtotal</span><span>₹{subtotal.toFixed(0)}</span></div>
+          {discountPct>0&&<div className="discount-line"><span>Discount ({discountPct}%)</span><span>-₹{discountAmt.toFixed(0)}</span></div>}
+          <div className="ctotal" style={{fontSize:".74rem",color:"var(--m)",fontWeight:400}}><span>GST (5%)</span><span>₹{gstAmt.toFixed(0)}</span></div>
+          <div className="ctotal" style={{borderTop:"1px solid var(--b)",paddingTop:".4rem",fontSize:".92rem"}}><span>Total</span><span style={{color:"var(--a)"}}>₹{total.toFixed(0)}</span></div>
+          <button className="chkbtn" onClick={()=>setShowCheckout(true)}>Proceed to Checkout →</button>
+        </div>}
+      </div>
     </div>
 
-    {/* Cart drawer (all screens) */}
+    {/* Mobile cart drawer */}
     <div className={`dov ${drawerOpen?"open":""}`} onClick={()=>setDrawerOpen(false)}/><div className={`drawer ${drawerOpen?"open":""}`}><div className="dhandle"/><button className="dclose" onClick={()=>setDrawerOpen(false)}>✕</button><div style={{display:"flex",flexDirection:"column",overflow:"hidden",flex:1}}>{cartBody}</div></div>
     {popupItem&&<OptionPopup item={popupItem} onConfirm={confirmOption} onClose={()=>setPopupItem(null)}/>}
     {showCheckout&&!orderPlaced&&(<div className="mov"><div className="modal" style={{maxHeight:"90vh",overflowY:"auto"}}>

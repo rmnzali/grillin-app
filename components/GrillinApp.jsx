@@ -2,7 +2,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import {
   fetchMenuItems, updateMenuItem, insertMenuItem, deleteMenuItem, bulkInsertMenuItems,
-  fetchOrders, insertOrder, updateOrderStatus, deleteOrder, deleteDoneOrders, deleteOldOrders,
+  fetchOrders, insertOrder, updateOrderStatus, cancelOrder, deleteOrder, deleteDoneOrders, deleteOldOrders,
   findCustomerByPhone, upsertCustomer,
   subscribeToOrders, subscribeToMenu,
   fetchSettings, updateSetting,
@@ -700,11 +700,7 @@ function AdminPanel({ menuItems, setMenuItems, orders, setOrders, onLogout, sett
   };
   const handleAdvance=async(id,ns)=>{setOrders(p=>p.map(o=>o.id===id?{...o,status:ns}:o));await updateOrderStatus(id,ns);};
   const handleRemove=async(id)=>{setOrders(p=>p.filter(o=>o.id!==id));await deleteOrder(id);};
-  const handleCancel=async(id,reason,contactedCustomer)=>{setOrders(p=>p.map(o=>o.id===id?{...o,status:"Cancelled",cancelReason:reason,contactedCustomer}:o));await updateOrderStatus(id,"Cancelled");
-    // Store cancel reason in order notes
-    const { supabase } = await import("@/lib/supabase");
-    await supabase.from("orders").update({status:"Cancelled",notes:reason+(contactedCustomer?" [Customer contacted]":""),updated_at:new Date().toISOString()}).eq("id",id);
-  };
+  const handleCancel=async(id,reason,contactedCustomer)=>{setOrders(p=>p.map(o=>o.id===id?{...o,status:"Cancelled",cancelReason:reason,contactedCustomer}:o));await cancelOrder(id,reason,contactedCustomer);};
   const parseBulk=(t)=>{setBParsed(t.trim().split("\n").filter(l=>l.trim()).map((line,i)=>{const p=line.split(",").map(x=>x.trim());return p.length<3?{line:i+1,err:"Need: Name, Category, Price",raw:line}:{line:i+1,name:p[0],category:p[1],price:p[2],description:p[3]||"",emoji:p[4]||"",ok:true};}));};
   const importBulk=async()=>{const items=bParsed.filter(x=>x.ok).map(x=>({id:Date.now()+Math.random(),name:x.name,category:x.category,price:x.price,description:x.description,emoji:x.emoji,available:true,outOfStock:false}));setMenuItems(p=>[...p,...items]);setBulk("");setBParsed([]);setTab("manage");await bulkInsertMenuItems(items);};
   return (<div className="adm">

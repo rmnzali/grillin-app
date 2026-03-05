@@ -305,6 +305,7 @@ tr:last-child td{border-bottom:none}tr:hover td{background:rgba(255,255,255,.015
 .toggle-switch.on .toggle-dot{left:23px}.toggle-switch.off .toggle-dot{left:3px}
 @media(max-width:900px){.main-col{max-width:100%}.astats{grid-template-columns:1fr 1fr}.ord-grid{grid-template-columns:1fr}}
 @media(max-width:580px){.adm-inner{padding:1rem}.fr{grid-template-columns:1fr}.modal{padding:1.35rem 1.1rem}}
+@media(max-width:768px){input,textarea,select,.fi,.ci-note-input,.search-box input,.bta{font-size:16px!important}}
 `;
 
 // ── OPTION POPUP ──
@@ -416,7 +417,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
   const reset = () => { setOrderPlaced(false);setShowCheckout(false);setForm({phone:"",name:"",type:"Delivery",addr:{house:"",apartment:"",street:"",place:"",landmark:""},notes:""});setAutoFilled(false); };
   const handleItemQtyChange = (item, d, e) => { if(e)e.stopPropagation(); const entries=cart.filter(c=>c.id===item.id); if(entries.length===1)changeQty(entries[0].key,d); else if(entries.length>1)setDrawerOpen(true); };
 
-  const CartBody = () => (<>
+  const cartBody = (<>
     <div className="chead"><h2>Your Order</h2><p>{totalItems===0?"No items yet":`${totalItems} item${totalItems>1?"s":""}`}</p></div>
     <div className="cbody">{cart.length===0?<div className="cempty"><div className="cempty-icon">🍖</div><p>Add items from the menu</p></div>
       :cart.map(item=>(<div key={item.key} className="ci"><div className="ci-i"><div className="ci-n">{cleanName(item.name)}</div>{item.variant&&<div className="ci-v">{item.variant}</div>}<div className="ci-p">₹{item.unitPrice} × {item.qty} = ₹{(item.unitPrice*item.qty).toFixed(0)}</div>
@@ -491,7 +492,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
     </div>
 
     {/* Cart drawer (all screens) */}
-    <div className={`dov ${drawerOpen?"open":""}`} onClick={()=>setDrawerOpen(false)}/><div className={`drawer ${drawerOpen?"open":""}`}><div className="dhandle"/><button className="dclose" onClick={()=>setDrawerOpen(false)}>✕</button><div style={{display:"flex",flexDirection:"column",overflow:"hidden",flex:1}}><CartBody/></div></div>
+    <div className={`dov ${drawerOpen?"open":""}`} onClick={()=>setDrawerOpen(false)}/><div className={`drawer ${drawerOpen?"open":""}`}><div className="dhandle"/><button className="dclose" onClick={()=>setDrawerOpen(false)}>✕</button><div style={{display:"flex",flexDirection:"column",overflow:"hidden",flex:1}}>{cartBody}</div></div>
     {popupItem&&<OptionPopup item={popupItem} onConfirm={confirmOption} onClose={()=>setPopupItem(null)}/>}
     {showCheckout&&!orderPlaced&&(<div className="mov"><div className="modal" style={{maxHeight:"90vh",overflowY:"auto"}}>
       <h2>Complete Your Order</h2>

@@ -132,7 +132,7 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 
 /* ── MENU ── */
 .menu-area{padding:0 .5rem 2rem}
-@media(max-width:700px){.menu-area{padding:0 1.25rem 2rem}}
+@media(max-width:900px){.menu-area{padding:0 1.25rem .5rem}}
 .snote{font-size:.78rem;color:var(--m);margin-bottom:.7rem}
 .sec-head{font-family:var(--font);font-size:1.3rem;font-weight:800;color:var(--a);margin:1.8rem 0 .85rem;padding-bottom:.5rem;border-bottom:2px solid rgba(220,38,38,.2);letter-spacing:-.01em}
 .sec-head:first-child{margin-top:.5rem}
@@ -209,12 +209,11 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 .chkbtn:hover:not(:disabled){background:var(--a2)}.chkbtn:disabled{opacity:.3;cursor:not-allowed}
 
 /* Footer */
-.access-footer{display:block;width:100%;text-align:center;padding:.5rem;background:transparent;border:none;color:var(--m);font-family:var(--font);font-size:.62rem;cursor:pointer;margin-top:.5rem;transition:color .15s;opacity:.5}
+.access-footer{display:block;width:100%;text-align:center;padding:.4rem;background:transparent;border:none;color:var(--m);font-family:var(--font);font-size:.6rem;cursor:pointer;margin-top:.3rem;transition:color .15s;opacity:.4}
 .access-footer:hover{color:var(--t);opacity:1}
-.contact-footer{border:none;padding:2.5rem 1rem 1.5rem;text-align:center}
-@media(max-width:900px){.contact-footer{display:none}}
-.contact-footer a{color:var(--m);text-decoration:none;font-size:.72rem;font-weight:400}.contact-footer a:hover{text-decoration:underline;color:var(--t2)}
-.contact-row{display:flex;align-items:center;justify-content:center;gap:.5rem;margin-bottom:.3rem;font-size:.72rem;color:var(--m);opacity:.5}
+.contact-footer{border:none;padding:1.5rem 1rem 1rem;text-align:center;background:transparent}
+.contact-footer a{color:var(--m);text-decoration:none;font-size:.7rem;font-weight:400;opacity:.4}.contact-footer a:hover{text-decoration:underline;color:var(--t2);opacity:1}
+.contact-row{display:flex;align-items:center;justify-content:center;gap:.5rem;margin-bottom:.25rem;font-size:.7rem;color:var(--m);opacity:.4}
 .contact-row a{color:var(--m);text-decoration:none}.contact-row a:hover{text-decoration:underline;color:var(--t2)}
 
 /* Drawer (mobile cart) */

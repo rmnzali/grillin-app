@@ -60,19 +60,22 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 
 /* ── STICKY TOP: nav + search + pills ── */
 .sticky-top{position:sticky;top:0;z-index:100;background:var(--bg);box-shadow:0 4px 16px rgba(0,0,0,.5)}
-.nav{padding:.85rem 1.25rem .5rem;display:flex;align-items:center;justify-content:space-between}
+.nav{padding:.85rem 2rem .5rem;display:flex;align-items:center;justify-content:space-between}
+@media(max-width:700px){.nav{padding:.85rem 1.25rem .5rem}}
 .nav-logo img{height:72px;width:auto;object-fit:contain;display:block}
 @media(max-width:580px){.nav-logo img{height:48px}}
 .cart-pill{display:flex;align-items:center;gap:.45rem;background:var(--a);color:white;border:none;border-radius:26px;padding:.5rem 1.1rem;font-family:var(--font);font-size:.85rem;font-weight:700;cursor:pointer;position:relative;transition:all .15s}
 .cart-pill:hover{background:var(--a2)}
 .cart-pill svg{flex-shrink:0}
 .cart-badge{position:absolute;top:-4px;right:-4px;background:#f5f5f5;color:var(--a);border-radius:50%;width:19px;height:19px;font-size:.6rem;font-weight:700;display:flex;align-items:center;justify-content:center}
-.search-wrap{padding:.35rem 1.25rem .5rem}
+.search-wrap{padding:.35rem 2rem .5rem}
+@media(max-width:700px){.search-wrap{padding:.35rem 1.25rem .5rem}}
 .search-box{display:flex;align-items:center;gap:.55rem;background:var(--s2);border:1px solid var(--b);border-radius:var(--radius);padding:.6rem .95rem;transition:border .2s}
 .search-box:focus-within{border-color:rgba(220,38,38,.35)}
 .search-box input{background:transparent;border:none;outline:none;color:var(--t);font-family:var(--font);font-size:.85rem;width:100%}
 .search-box input::placeholder{color:var(--m)}
-.cat-strip{display:flex;gap:.4rem;padding:.15rem 1.25rem .7rem;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.cat-strip{display:flex;gap:.4rem;padding:.15rem 2rem .7rem;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+@media(max-width:700px){.cat-strip{padding:.15rem 1.25rem .7rem}}
 .cat-strip::-webkit-scrollbar{display:none}
 .cat-pill{flex-shrink:0;padding:.38rem .9rem;border-radius:20px;border:1px solid var(--b2);background:transparent;color:var(--m);font-family:var(--font);font-size:.77rem;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
 .cat-pill:hover{border-color:var(--a);color:var(--t)}
@@ -80,13 +83,14 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 
 /* ── LAYOUT ── */
 .layout{display:flex;justify-content:center;height:100vh;overflow:hidden;width:100%}
-.main-col{display:flex;flex-direction:column;overflow:hidden;flex:1;max-width:900px}
+.main-col{display:flex;flex-direction:column;overflow:hidden;flex:1;max-width:1200px}
 .main-col .sticky-top{flex-shrink:0;position:relative}
 .menu-scroll{flex:1;overflow-y:auto}
-.cpanel{width:310px;flex-shrink:0}
+.cpanel{display:none}
 
 /* ── MENU ── */
-.menu-area{padding:0 1.25rem 2rem}
+.menu-area{padding:0 2rem 2rem}
+@media(max-width:700px){.menu-area{padding:0 1.25rem 2rem}}
 .snote{font-size:.78rem;color:var(--m);margin-bottom:.7rem}
 .sec-head{font-family:var(--font);font-size:1.15rem;font-weight:800;color:var(--a);margin:1.4rem 0 .7rem;padding-bottom:.4rem;border-bottom:2px solid rgba(220,38,38,.2);letter-spacing:-.01em}
 .sec-head:first-child{margin-top:.3rem}
@@ -283,7 +287,7 @@ tr:last-child td{border-bottom:none}tr:hover td{background:rgba(255,255,255,.015
 .toggle-switch.on{background:var(--a)}.toggle-switch.off{background:var(--b2)}
 .toggle-dot{position:absolute;top:3px;width:18px;height:18px;border-radius:50%;background:white;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
 .toggle-switch.on .toggle-dot{left:23px}.toggle-switch.off .toggle-dot{left:3px}
-@media(max-width:900px){.cpanel{display:none!important}.main-col{max-width:100%}.astats{grid-template-columns:1fr 1fr}.ord-grid{grid-template-columns:1fr}}
+@media(max-width:900px){.main-col{max-width:100%}.astats{grid-template-columns:1fr 1fr}.ord-grid{grid-template-columns:1fr}}
 @media(max-width:580px){.adm-inner{padding:1rem}.fr{grid-template-columns:1fr}.modal{padding:1.35rem 1.1rem}}
 `;
 
@@ -468,10 +472,9 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
           </div>
         </div>
       </div>
-      <div className="cpanel"><CartBody/></div>
     </div>
 
-    {/* Mobile drawer */}
+    {/* Cart drawer (all screens) */}
     <div className={`dov ${drawerOpen?"open":""}`} onClick={()=>setDrawerOpen(false)}/><div className={`drawer ${drawerOpen?"open":""}`}><div className="dhandle"/><button className="dclose" onClick={()=>setDrawerOpen(false)}>✕</button><div style={{display:"flex",flexDirection:"column",overflow:"hidden",flex:1}}><CartBody/></div></div>
     {popupItem&&<OptionPopup item={popupItem} onConfirm={confirmOption} onClose={()=>setPopupItem(null)}/>}
     {showCheckout&&!orderPlaced&&(<div className="mov"><div className="modal" style={{maxHeight:"90vh",overflowY:"auto"}}>

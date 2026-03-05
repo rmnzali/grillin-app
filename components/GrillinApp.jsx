@@ -75,7 +75,7 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 .nav{padding:.85rem .5rem .5rem;display:flex;align-items:center;justify-content:space-between}
 @media(max-width:700px){.nav{padding:.85rem 1.25rem .5rem}}
 .nav-logo img{height:120px;width:auto;object-fit:contain;display:block}
-@media(max-width:580px){.nav-logo img{height:64px}}
+@media(max-width:580px){.nav-logo img{height:80px}}
 .cart-pill{display:flex;align-items:center;gap:.45rem;background:var(--a);color:white;border:none;border-radius:26px;padding:.5rem 1.1rem;font-family:var(--font);font-size:.85rem;font-weight:700;cursor:pointer;position:relative;transition:all .15s}
 .cart-pill:hover{background:var(--a2)}
 .cart-pill svg{flex-shrink:0}
@@ -102,30 +102,33 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 .main-col .sticky-top{flex-shrink:0;position:relative}
 .menu-scroll{flex:1;overflow-y:auto}
 
-/* ── SIDE CART (desktop) ── */
-.cpanel{width:340px;flex-shrink:0;background:var(--s);border-left:1px solid var(--b);display:flex;flex-direction:column;overflow:hidden}
+/* ── SIDE CART (desktop) — hidden by default, slides in when open ── */
+.cpanel{width:380px;flex-shrink:0;background:var(--s);border-left:1px solid var(--b);display:flex;flex-direction:column;overflow:hidden;position:fixed;top:0;right:0;bottom:0;z-index:200;transform:translateX(100%);transition:transform .3s cubic-bezier(.16,1,.3,1)}
+.cpanel.open{transform:translateX(0)}
+.cpanel-overlay{position:fixed;inset:0;z-index:190;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .2s}
+.cpanel-overlay.open{opacity:1;pointer-events:all}
 .cpanel .cp-header{padding:1.1rem 1.2rem;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between}
 .cpanel .cp-header h2{font-size:1.05rem;font-weight:800;display:flex;align-items:center;gap:.4rem}
-.cpanel .cp-close{background:none;border:none;color:var(--m);cursor:pointer;font-size:1rem;padding:4px}
+.cpanel .cp-close{background:none;border:none;color:var(--m);cursor:pointer;font-size:1.1rem;padding:4px;display:flex;align-items:center;justify-content:center}
 .cpanel .cp-close:hover{color:var(--t)}
-.cpanel .cp-body{flex:1;overflow-y:auto;padding:.5rem 1rem}
+.cpanel .cp-body{flex:1;overflow-y:auto;padding:.5rem 1.1rem}
 .cpanel .cp-empty{text-align:center;padding:2.5rem 1rem;color:var(--m);font-size:.83rem}
 .cpanel .cp-empty-icon{font-size:2rem;margin-bottom:.4rem;opacity:.4}
-.cpanel .cp-foot{padding:.85rem 1rem;border-top:1px solid var(--b)}
-.cpanel .cp-item{display:flex;align-items:flex-start;gap:.5rem;padding:.6rem 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cpanel .cp-foot{padding:.85rem 1.1rem;border-top:1px solid var(--b)}
+.cpanel .cp-item{display:flex;align-items:flex-start;gap:.5rem;padding:.65rem 0;border-bottom:1px solid rgba(255,255,255,.04)}
 .cpanel .cp-item-info{flex:1;min-width:0}
-.cpanel .cp-item-name{font-size:.82rem;font-weight:600}
-.cpanel .cp-item-variant{font-size:.65rem;color:var(--a);margin-top:2px;font-weight:500}
+.cpanel .cp-item-name{font-size:.85rem;font-weight:600}
+.cpanel .cp-item-variant{font-size:.66rem;color:var(--a);margin-top:2px;font-weight:500}
 .cpanel .cp-item-price{font-size:.72rem;color:var(--m);margin-top:1px}
-.cpanel .cp-item-note{width:100%;padding:.28rem .45rem;background:var(--s2);border:1px solid var(--b);border-radius:4px;color:var(--t);font-family:var(--font);font-size:.65rem;outline:none;margin-top:3px}
+.cpanel .cp-item-note{width:100%;padding:.3rem .5rem;background:var(--s2);border:1px solid var(--b);border-radius:4px;color:var(--t);font-family:var(--font);font-size:.68rem;outline:none;margin-top:3px}
 .cpanel .cp-item-note:focus{border-color:var(--a)}
 .cpanel .cp-item-note::placeholder{color:var(--m)}
 .cp-qty{display:flex;align-items:center;border:1px solid var(--a);border-radius:6px;overflow:hidden;flex-shrink:0}
-.cp-qty button{width:24px;height:24px;border:none;background:transparent;color:var(--a);font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cp-qty button{width:26px;height:26px;border:none;background:transparent;color:var(--a);font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .cp-qty button:hover{background:rgba(220,38,38,.1)}
-.cp-qty span{font-family:var(--font);font-size:.75rem;font-weight:700;width:18px;text-align:center;color:var(--t)}
+.cp-qty span{font-family:var(--font);font-size:.78rem;font-weight:700;width:20px;text-align:center;color:var(--t)}
 
-@media(max-width:900px){.main-col{padding:0}.cpanel{display:none!important}}
+@media(max-width:900px){.main-col{padding:0}.cpanel{display:none!important}.cpanel-overlay{display:none!important}}
 
 /* ── MENU ── */
 .menu-area{padding:0 .5rem 2rem;min-height:100%;display:flex;flex-direction:column}
@@ -389,6 +392,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
   const [activeCat, setActiveCat] = useState("All");
   const [cart, setCart] = useState([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [sideCartOpen, setSideCartOpen] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [popupItem, setPopupItem] = useState(null);
@@ -464,7 +468,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
         <div className="sticky-top">
           <nav className="nav">
             <div className="nav-logo"><img src={LOGO_SRC} alt="Grillin'" onError={e=>{e.target.style.display='none'}}/></div>
-            {totalItems>0&&<button className="cart-pill" onClick={()=>setDrawerOpen(true)}><CartIcon/> ₹{total.toFixed(0)}<span className="cart-badge">{totalItems}</span></button>}
+            {totalItems>0&&<button className="cart-pill" onClick={()=>{if(window.innerWidth>900)setSideCartOpen(true);else setDrawerOpen(true);}}><CartIcon/> ₹{total.toFixed(0)}<span className="cart-badge">{totalItems}</span></button>}
           </nav>
           <div className="search-wrap"><div className="search-box"><span className="search-icon"><SearchIcon/></span><input placeholder="What are you craving?" value={search} onChange={e=>setSearch(e.target.value)}/>{search&&<button className="search-clear" onClick={()=>setSearch("")}><ClearIcon/></button>}</div></div>
           <div className="cat-strip">
@@ -518,8 +522,9 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
       </div>
 
       {/* Desktop side cart panel */}
-      <div className="cpanel">
-        <div className="cp-header"><h2>🛒 Your Order</h2></div>
+      <div className={`cpanel-overlay ${sideCartOpen?"open":""}`} onClick={()=>setSideCartOpen(false)}/>
+      <div className={`cpanel ${sideCartOpen?"open":""}`}>
+        <div className="cp-header"><h2>🛒 Your Order</h2><button className="cp-close" onClick={()=>setSideCartOpen(false)}>✕</button></div>
         <div className="cp-body">
           {cart.length===0?<div className="cp-empty"><div className="cp-empty-icon">🍖</div><p>Add items from the menu</p></div>
           :cart.map(item=>(<div key={item.key} className="cp-item"><div className="cp-item-info"><div className="cp-item-name">{cleanName(item.name)}</div>{item.variant&&<div className="cp-item-variant">{item.variant}</div>}<div className="cp-item-price">₹{item.unitPrice} × {item.qty} = ₹{(item.unitPrice*item.qty).toFixed(0)}</div>
@@ -531,7 +536,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
           {discountPct>0&&<div className="discount-line"><span>Discount ({discountPct}%)</span><span>-₹{discountAmt.toFixed(0)}</span></div>}
           <div className="ctotal" style={{fontSize:".74rem",color:"var(--m)",fontWeight:400}}><span>GST (5%)</span><span>₹{gstAmt.toFixed(0)}</span></div>
           <div className="ctotal" style={{borderTop:"1px solid var(--b)",paddingTop:".4rem",fontSize:".92rem"}}><span>Total</span><span style={{color:"var(--a)"}}>₹{total.toFixed(0)}</span></div>
-          <button className="chkbtn" onClick={()=>setShowCheckout(true)}>Proceed to Checkout →</button>
+          <button className="chkbtn" onClick={()=>{setSideCartOpen(false);setShowCheckout(true);}}>Proceed to Checkout →</button>
         </div>}
       </div>
     </div>

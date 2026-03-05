@@ -403,6 +403,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
   const setAddr = (field,val) => setForm(f=>({...f,addr:{...f.addr,[field]:val}}));
   const addrComplete = form.addr.house.trim() && form.addr.street.trim() && form.addr.place.trim();
   const fullAddress = (addr) => [addr.house,addr.apartment,addr.street,addr.place,addr.landmark].filter(Boolean).join(", ");
+  const visibleItems = useMemo(() => menuItems.filter(i => i.available), [menuItems]);
   const cats = useMemo(() => [...new Set(visibleItems.map(i=>i.category))], [visibleItems]);
   const handlePhoneChange = async (val) => {
     setForm(f=>({...f,phone:val})); setAutoFilled(false);
@@ -417,7 +418,6 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
   };
-  const visibleItems = useMemo(() => menuItems.filter(i => i.available), [menuItems]);
   const filtered = useMemo(() => {
     if (search.trim()) { const q=search.toLowerCase(); return visibleItems.filter(i=>i.name.toLowerCase().includes(q)||i.category.toLowerCase().includes(q)); }
     return visibleItems;

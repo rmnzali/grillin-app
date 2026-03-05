@@ -102,6 +102,12 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 .main-col{display:flex;flex-direction:column;overflow:hidden;flex:1;padding:0 5vw}
 .main-col .sticky-top{flex-shrink:0;position:relative}
 .menu-scroll{flex:1;overflow-y:auto;background:var(--bg)}
+@media(max-width:900px){
+  .layout{height:auto;overflow:visible;display:block}
+  .main-col{overflow:visible;padding:0;height:auto}
+  .main-col .sticky-top{position:sticky;top:0;z-index:100}
+  .menu-scroll{overflow:visible;flex:none}
+}
 
 /* ── SIDE CART (desktop) — hidden by default, slides in when open ── */
 .cpanel{width:380px;flex-shrink:0;background:var(--s);border-left:1px solid var(--b);display:flex;flex-direction:column;overflow:hidden;position:fixed;top:0;right:0;bottom:0;z-index:200;transform:translateX(100%);transition:transform .3s cubic-bezier(.16,1,.3,1)}

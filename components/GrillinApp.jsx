@@ -24,8 +24,9 @@ const tagLabel = (item) => {
 };
 const DEFAULT_ADMIN_PASSWORD = "grillin2024";
 const STATUS_FLOW = ["New","Preparing","Done"];
-const STATUS_BG = {New:"rgba(220,38,38,.14)",Preparing:"rgba(34,197,94,.12)",Done:"rgba(120,113,108,.12)"};
-const STATUS_COLOR = {New:"#ef4444",Preparing:"#22c55e",Done:"#78716c"};
+const ALL_STATUSES = ["New","Preparing","Done","Cancelled"];
+const STATUS_BG = {New:"rgba(220,38,38,.14)",Preparing:"rgba(34,197,94,.12)",Done:"rgba(120,113,108,.12)",Cancelled:"rgba(245,158,11,.12)"};
+const STATUS_COLOR = {New:"#ef4444",Preparing:"#22c55e",Done:"#78716c",Cancelled:"#f59e0b"};
 const LOGO_SRC = "/grillin-logo.png";
 const PHONE_1 = "9901538782";
 const PHONE_2 = "7259020939";
@@ -264,14 +265,23 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 .ord-fbtn:hover{border-color:var(--a);color:var(--t)}.ord-fbtn.active{background:var(--a);border-color:var(--a);color:white}
 .ord-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:.85rem}
 .ord-card{background:var(--s);border:1px solid var(--b);border-radius:var(--radius);overflow:hidden;animation:slideUp .2s ease}
-.ord-card.status-New{border-left:4px solid var(--r)}.ord-card.status-Preparing{border-left:4px solid var(--g)}.ord-card.status-Done{border-left:4px solid var(--m);opacity:.6}
+.ord-card.status-New{border-left:4px solid var(--r)}.ord-card.status-Preparing{border-left:4px solid var(--g)}.ord-card.status-Done{border-left:4px solid var(--m);opacity:.6}.ord-card.status-Cancelled{border-left:4px solid var(--amber);opacity:.7}
+.cancel-reason{font-size:.72rem;color:var(--amber);padding:.4rem 1rem;border-top:1px solid var(--b)}
+.cancel-modal-opts{display:flex;flex-direction:column;gap:.4rem;margin-bottom:.7rem}
+.cancel-opt{display:flex;align-items:center;gap:.5rem;padding:.55rem .75rem;border:1px solid var(--b);border-radius:var(--radius-sm);cursor:pointer;font-size:.82rem;transition:all .12s}
+.cancel-opt:hover{border-color:var(--amber)}.cancel-opt.sel{border-color:var(--amber);background:rgba(245,158,11,.06)}
+.cancel-check{width:16px;height:16px;border-radius:50%;border:2px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:.55rem;flex-shrink:0;transition:all .12s}
+.cancel-check.checked{background:var(--amber);border-color:var(--amber);color:#000}
+.contacted-row{display:flex;align-items:center;gap:.5rem;padding:.5rem 0;font-size:.8rem;cursor:pointer}
+.contacted-check{width:18px;height:18px;border-radius:4px;border:2px solid var(--b2);display:flex;align-items:center;justify-content:center;font-size:.6rem;transition:all .12s}
+.contacted-check.checked{background:var(--a);border-color:var(--a);color:white}
 .ord-card-head{padding:.85rem 1rem;display:flex;align-items:flex-start;justify-content:space-between}
 .ord-num{font-size:1rem;font-weight:800}.ord-customer{font-size:.82rem;font-weight:500;margin-top:2px}.ord-time{font-size:.7rem;color:var(--m);margin-top:2px}
 .ord-type{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:var(--s2);border:1px solid var(--b2);border-radius:4px;padding:2px 6px}
 .ord-status-pill{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-radius:20px;padding:3px 10px}
 .ord-items{padding:.75rem 1rem}
 .ord-item-row{display:flex;justify-content:space-between;align-items:baseline;font-size:.8rem;padding:.2rem 0}
-.ord-item-name{color:var(--m);flex:1}.ord-item-var{font-size:.68rem;color:var(--a);margin-left:4px;font-weight:500}
+.ord-item-name{color:white;flex:1;font-weight:600}.ord-item-var{font-size:.68rem;color:var(--a);margin-left:4px;font-weight:500}
 .ord-item-price{font-weight:600;white-space:nowrap;margin-left:.5rem}
 .ord-item-note{font-size:.68rem;color:var(--amber);font-style:italic;padding-left:1rem}
 .ord-notes{font-size:.73rem;color:var(--m);font-style:italic;padding:.5rem 1rem;border-top:1px solid var(--b)}
@@ -393,7 +403,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
   const setAddr = (field,val) => setForm(f=>({...f,addr:{...f.addr,[field]:val}}));
   const addrComplete = form.addr.house.trim() && form.addr.street.trim() && form.addr.place.trim();
   const fullAddress = (addr) => [addr.house,addr.apartment,addr.street,addr.place,addr.landmark].filter(Boolean).join(", ");
-  const cats = useMemo(() => [...new Set(menuItems.map(i=>i.category))], [menuItems]);
+  const cats = useMemo(() => [...new Set(visibleItems.map(i=>i.category))], [visibleItems]);
   const handlePhoneChange = async (val) => {
     setForm(f=>({...f,phone:val})); setAutoFilled(false);
     if (val.length >= 10) { const cust = await findCustomerByPhone(val); if (cust) { setForm(f=>({...f,phone:val,name:cust.name||f.name,addr:{house:cust.house||"",apartment:cust.apartment||"",street:cust.street||"",place:cust.place||"",landmark:cust.landmark||""}})); setAutoFilled(true); } }
@@ -407,10 +417,11 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
   };
+  const visibleItems = useMemo(() => menuItems.filter(i => i.available), [menuItems]);
   const filtered = useMemo(() => {
-    if (search.trim()) { const q=search.toLowerCase(); return menuItems.filter(i=>i.name.toLowerCase().includes(q)||i.category.toLowerCase().includes(q)); }
-    return menuItems;
-  }, [menuItems,search]);
+    if (search.trim()) { const q=search.toLowerCase(); return visibleItems.filter(i=>i.name.toLowerCase().includes(q)||i.category.toLowerCase().includes(q)); }
+    return visibleItems;
+  }, [visibleItems,search]);
   const grouped = useMemo(() => filtered.reduce((acc,item)=>{acc[item.category]=acc[item.category]||[];acc[item.category].push(item);return acc;},{}), [filtered]);
   const handleClick = (item) => { if(!item.available||item.outOfStock)return; if(needsPopup(item))setPopupItem(item); else addItem(item,{val:null,num:parseFloat(item.price)||0}); };
   const cartKey = (item,variant) => `${item.id}__${variant||""}`;
@@ -468,14 +479,14 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
           </div>
         </div>
         <div className="menu-scroll" ref={menuScrollEl}>
-          {!storeOpen&&<div className="closed-banner">🕐 We're currently closed. Orders accepted {settings.openTime||"10:00"} – {settings.closeTime||"23:00"}</div>}
+          {!storeOpen&&<div className="closed-banner">🕐 We&apos;re currently closed</div>}
           <div className="menu-area">
             {search&&<div className="snote">{filtered.length} result{filtered.length!==1?"s":""} for &ldquo;{search}&rdquo;</div>}
             {Object.entries(grouped).map(([cat,items])=>(<div key={cat} id={`cat-${cat.replace(/\s+/g,"-")}`}>
               <div className="sec-head">{cat}</div>
               <div className="mcard-grid">
               {items.map(item=>{const qty=itemQty(item);const tag=tagLabel(item);return(
-                <div key={item.id} className={`mcard ${!item.available?"unavail":item.outOfStock?"oos":""}`} onClick={()=>handleClick(item)}>
+                <div key={item.id} className={`mcard ${item.outOfStock?"oos":""}`} onClick={()=>handleClick(item)}>
                   <div className="mc-info">
                     <div className="mc-name">{cleanName(item.name)}</div>
                     {item.description&&<div className="mc-desc">{item.description}</div>}
@@ -483,7 +494,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
                     {tag&&!item.outOfStock&&<div className="mc-tag">{tag}</div>}
                   </div>
                   <div className="mc-right">
-                    {item.outOfStock?<span className="oos-badge">Out of Stock</span>:!item.available?null:
+                    {item.outOfStock?<span className="oos-badge">Out of Stock</span>:
                       qty>0?(<div className="zomato-qty"><button onClick={e=>handleItemQtyChange(item,-1,e)}>−</button><span>{qty}</span><button onClick={e=>{e.stopPropagation();handleClick(item);}}>+</button></div>):
                       (<button className="zomato-add" onClick={e=>{e.stopPropagation();handleClick(item);}}>ADD</button>)
                     }
@@ -530,7 +541,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
       <div className="fg"><label className="fl">Your Name *</label><input className="fi" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} placeholder="Your name"/></div>
       <div className="fg"><label className="fl">Order Type</label><div style={{display:"flex",gap:".45rem"}}>{["Delivery","Pickup"].map(t=>(<div key={t} onClick={()=>setForm({...form,type:t})} style={{flex:1,padding:".6rem",borderRadius:"var(--radius-sm)",border:`2px solid ${form.type===t?"var(--a)":"var(--b)"}`,background:form.type===t?"rgba(220,38,38,.06)":"var(--s2)",cursor:"pointer",textAlign:"center",fontSize:".82rem",fontWeight:form.type===t?700:500,textTransform:"uppercase",letterSpacing:".03em"}}>{t==="Delivery"?"🛵 Delivery":"🏃 Pickup"}</div>))}</div></div>
       {form.type==="Delivery"&&<>
-        <div className="delivery-note">🛵 We deliver within 3 km only</div>
+        <div className="delivery-note">🛵 We deliver within {settings.deliveryRadius||3} km only</div>
         <div className="addr-block"><div className="addr-block-title">🏠 Delivery Address *{autoFilled&&<span className="autofill-tag">✓ Auto-filled</span>}</div>
         <div className="fg"><label className="fl">House / Flat No. *</label><input className="fi" value={form.addr.house} onChange={e=>setAddr("house",e.target.value)}/></div>
         <div className="fg"><label className="fl">Apartment / Building</label><input className="fi" value={form.addr.apartment} onChange={e=>setAddr("apartment",e.target.value)}/></div>
@@ -543,7 +554,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
         {discountPct>0&&<div className="osi" style={{color:"var(--g)"}}><span>Discount ({discountPct}%)</span><span>-₹{discountAmt.toFixed(0)}</span></div>}
         <div className="osi"><span>GST (5%)</span><span>₹{gstAmt.toFixed(0)}</span></div>
         <div className="ost"><span>Total</span><span>₹{total.toFixed(0)}</span></div></div>
-      <div className="payment-note">💳 Payment on Delivery — Cash or UPI accepted</div>
+      <div className="payment-note">{form.type==="Delivery"?"💳 Payment on Delivery — Cash or UPI accepted":"💳 Pay at Restaurant"}</div>
       <div className="macts"><button className="bg" onClick={()=>setShowCheckout(false)}>Back</button><button className="ba" onClick={placeOrder} disabled={!canPlace}>Place Order</button></div>
     </div></div>)}
     {orderPlaced&&<div className="mov"><div className="modal"><div className="sbox"><div className="sicon">🔥</div><h2>Order Placed!</h2><div className="otag">Order #{orderNum}</div><p>Thank you, {form.name}!<br/>Your order has been received and is being prepared.</p><p style={{fontSize:".78rem",color:"var(--m)",marginBottom:".7rem"}}>Need to change or cancel? Call us immediately.</p><a href={`tel:${PHONE_1}`} className="call-btn"><PhoneIcon/> Call {PHONE_1}</a><div style={{marginTop:"1rem"}}><button className="ba" style={{width:"100%"}} onClick={reset}>Place New Order</button></div></div></div></div>}
@@ -551,20 +562,28 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
 }
 
 // ── ORDER DASHBOARD — now shows item-wise special instructions (#3) ──
-function OrderDashboard({ orders, onAdvance, onRemove, onClearDone }) {
+function OrderDashboard({ orders, onAdvance, onRemove, onCancel }) {
   const [filter, setFilter] = useState("All");
-  const counts = useMemo(()=>STATUS_FLOW.reduce((acc,s)=>({...acc,[s]:orders.filter(o=>o.status===s).length}),{}), [orders]);
+  const [cancelModal, setCancelModal] = useState(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [contacted, setContacted] = useState(false);
+  const CANCEL_REASONS = ["Item unavailable","Customer asked to cancel","Restaurant busy","No delivery person"];
+  const counts = useMemo(()=>ALL_STATUSES.reduce((acc,s)=>({...acc,[s]:orders.filter(o=>o.status===s).length}),{}), [orders]);
   const displayed = useMemo(()=>{const o=filter==="All"?orders:orders.filter(o=>o.status===filter);return [...o].sort((a,b)=>new Date(b.placedAt)-new Date(a.placedAt));},[orders,filter]);
+  const handleCancel = () => {
+    if (!cancelReason) return;
+    onCancel(cancelModal, cancelReason, contacted);
+    setCancelModal(null); setCancelReason(""); setContacted(false);
+  };
   return (<div>
     <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:".85rem",marginBottom:"1.25rem"}}>
       <div className="asc"><div className="asl">Total Orders</div><div className="asv">{orders.length}</div></div>
       <div className="asc"><div className="asl" style={{color:"#ef4444"}}>New</div><div className="asv">{counts["New"]||0}</div></div>
       <div className="asc"><div className="asl" style={{color:"#22c55e"}}>Preparing</div><div className="asv">{counts["Preparing"]||0}</div></div>
-      <div className="asc"><div className="asl">Done</div><div className="asv">{counts["Done"]||0}</div></div>
+      <div className="asc"><div className="asl" style={{color:"#f59e0b"}}>Cancelled</div><div className="asv">{counts["Cancelled"]||0}</div></div>
     </div>
     <div className="ord-filter">
-      {["All",...STATUS_FLOW].map(s=><button key={s} className={`ord-fbtn ${filter===s?"active":""}`} onClick={()=>setFilter(s)}>{s}{s!=="All"&&counts[s]>0?` (${counts[s]})`:""}</button>)}
-      {orders.some(o=>o.status==="Done")&&<button className="ord-fbtn" style={{marginLeft:"auto",color:"#f87171",borderColor:"rgba(220,38,38,.22)"}} onClick={onClearDone}>Clear Done</button>}
+      {["All",...ALL_STATUSES].map(s=><button key={s} className={`ord-fbtn ${filter===s?"active":""}`} onClick={()=>setFilter(s)}>{s}{s!=="All"&&counts[s]>0?` (${counts[s]})`:""}</button>)}
     </div>
     {displayed.length===0?<div className="ord-empty"><div className="ord-empty-icon">📋</div><p>{filter==="All"?"No orders yet":"No "+filter+" orders"}</p></div>
     :<div className="ord-grid">{displayed.map(order=>{
@@ -582,10 +601,28 @@ function OrderDashboard({ orders, onAdvance, onRemove, onClearDone }) {
           <div className="ord-item-row"><span className="ord-item-name">{item.name}{item.variant&&<span className="ord-item-var">({item.variant})</span>} ×{item.qty}</span><span className="ord-item-price">₹{(item.unitPrice*item.qty).toFixed(0)}</span></div>
           {item.itemNote&&<div className="ord-item-note">↳ {item.itemNote}</div>}
         </div>)}</div>
+        {order.cancelReason&&<div className="cancel-reason">❌ {order.cancelReason}{order.contactedCustomer?" · ✓ Customer contacted":""}</div>}
         <div className="ord-foot"><div className="ord-total">₹{order.total.toFixed(0)}</div><div className="ord-actions">
-          {nextStatus&&<button className="ord-next-btn" style={{background:btnColor}} onClick={()=>onAdvance(order.id,nextStatus)}>{nextStatus==="Preparing"?"Start Preparing":"Mark Done"}</button>}
-          <button className="ord-del-btn" onClick={()=>onRemove(order.id)}>✕</button></div></div>
+          {nextStatus&&order.status!=="Cancelled"&&<button className="ord-next-btn" style={{background:btnColor}} onClick={()=>onAdvance(order.id,nextStatus)}>{nextStatus==="Preparing"?"Start Preparing":"Mark Done"}</button>}
+          {(order.status==="New"||order.status==="Preparing")&&<button className="ord-del-btn" onClick={()=>{setCancelModal(order.id);setCancelReason("");setContacted(false);}}>Cancel</button>}
+          {order.status==="Cancelled"&&<button className="ord-del-btn" onClick={()=>onRemove(order.id)}>✕</button>}
+        </div></div>
       </div>);})}</div>}
+    {/* Cancel modal */}
+    {cancelModal&&<div className="mov"><div className="modal">
+      <h2>Cancel Order</h2>
+      <p style={{color:"var(--m)",fontSize:".82rem",marginBottom:".8rem"}}>Select a reason for cancellation</p>
+      <div className="cancel-modal-opts">
+        {CANCEL_REASONS.map(r=><div key={r} className={`cancel-opt ${cancelReason===r?"sel":""}`} onClick={()=>setCancelReason(r)}>
+          <div className={`cancel-check ${cancelReason===r?"checked":""}`}>{cancelReason===r?"✓":""}</div>{r}
+        </div>)}
+      </div>
+      <div className="contacted-row" onClick={()=>setContacted(!contacted)}>
+        <div className={`contacted-check ${contacted?"checked":""}`}>{contacted?"✓":""}</div>
+        Contacted customer about cancellation
+      </div>
+      <div className="macts"><button className="bg" onClick={()=>setCancelModal(null)}>Back</button><button className="ba" onClick={handleCancel} disabled={!cancelReason}>Cancel Order</button></div>
+    </div></div>}
   </div>);
 }
 
@@ -612,7 +649,6 @@ function SettingsPanel({ settings, setSettings, adminPassword, setAdminPassword 
     <div className="setting-row"><div><div className="setting-label">🔒 Change Admin Password</div><div className="setting-desc">Update the password used to access the admin panel</div></div><button className="abtn" onClick={()=>setShowPwdChange(!showPwdChange)}>{showPwdChange?"Cancel":"Change"}</button></div>
     {pwdOk&&<div style={{background:"rgba(34,197,94,.1)",border:"1px solid rgba(34,197,94,.22)",color:"#4ade80",borderRadius:"var(--radius-sm)",padding:".45rem .75rem",fontSize:".78rem",marginBottom:".45rem"}}>✓ Password updated successfully</div>}
     {showPwdChange&&<div style={{background:"var(--s)",border:"1px solid var(--b)",borderRadius:"var(--radius)",padding:"1rem",marginBottom:".6rem",marginTop:"-.25rem"}}>{pwdMsg&&<div className="aerr" style={{marginBottom:".45rem"}}>{pwdMsg}</div>}<div className="fg"><label className="fl">Current Password</label><input className="fi" type="password" value={oldPwd} onChange={e=>{setOldPwd(e.target.value);setPwdMsg("");}}/></div><div className="fg"><label className="fl">New Password</label><input className="fi" type="password" value={newPwd} onChange={e=>setNewPwd(e.target.value)}/></div><button className="ba" onClick={changePassword}>Update Password</button></div>}
-    <div className="setting-row"><div><div className="setting-label">🗑️ Delete Protection</div><div className="setting-desc">Admin password is always required to delete menu items</div></div><span style={{fontSize:".75rem",color:"var(--g)",fontWeight:600}}>Always On</span></div>
     <div className="setting-row"><div><div className="setting-label">🛵 Minimum ₹300 for Delivery</div><div className="setting-desc">Require a minimum order of ₹300 for delivery orders</div></div><Toggle on={settings.deliveryMinEnabled} onToggle={()=>toggleSetting("deliveryMinEnabled","delivery_min_enabled")}/></div>
     <div className="setting-row" style={{flexWrap:"wrap",gap:".45rem"}}><div><div className="setting-label">🏷️ Offer / Discount</div><div className="setting-desc">Apply a percentage discount to all orders</div></div><div style={{display:"flex",alignItems:"center",gap:".45rem"}}><Toggle on={settings.offerEnabled} onToggle={()=>toggleSetting("offerEnabled","offer_enabled")}/>{settings.offerEnabled&&<div style={{display:"flex",alignItems:"center",gap:".25rem"}}><input className="fi" style={{width:55,textAlign:"center",padding:".3rem"}} type="number" min="1" max="50" value={settings.offerPercent} onChange={e=>updateOfferPercent(e.target.value)}/><span style={{fontSize:".82rem",color:"var(--m)"}}>%</span></div>}</div></div>
     {/* Order timing */}
@@ -625,6 +661,10 @@ function SettingsPanel({ settings, setSettings, adminPassword, setAdminPassword 
       <select className="fsel" value={settings.autoClear||"off"} onChange={e=>updateAutoClear(e.target.value)}>
         <option value="off">Off</option><option value="weekly">Weekly (7 days)</option><option value="monthly">Monthly (30 days)</option>
       </select>
+    </div>
+    {/* Delivery radius */}
+    <div className="setting-row" style={{flexWrap:"wrap",gap:".45rem"}}><div><div className="setting-label">📍 Delivery Radius</div><div className="setting-desc">Maximum delivery distance shown to customers</div></div>
+      <div style={{display:"flex",alignItems:"center",gap:".25rem"}}><input className="fi" style={{width:55,textAlign:"center",padding:".3rem"}} type="number" min="1" max="50" value={settings.deliveryRadius||3} onChange={e=>{const v=Math.max(1,parseInt(e.target.value)||3);setSettings(s=>({...s,deliveryRadius:v}));updateSetting("delivery_radius",String(v));}}/><span style={{fontSize:".82rem",color:"var(--m)"}}>km</span></div>
     </div>
   </div>);
 }
@@ -660,7 +700,11 @@ function AdminPanel({ menuItems, setMenuItems, orders, setOrders, onLogout, sett
   };
   const handleAdvance=async(id,ns)=>{setOrders(p=>p.map(o=>o.id===id?{...o,status:ns}:o));await updateOrderStatus(id,ns);};
   const handleRemove=async(id)=>{setOrders(p=>p.filter(o=>o.id!==id));await deleteOrder(id);};
-  const handleClearDone=async()=>{if(window.confirm("Clear all done orders?")){setOrders(p=>p.filter(o=>o.status!=="Done"));await deleteDoneOrders();}};
+  const handleCancel=async(id,reason,contactedCustomer)=>{setOrders(p=>p.map(o=>o.id===id?{...o,status:"Cancelled",cancelReason:reason,contactedCustomer}:o));await updateOrderStatus(id,"Cancelled");
+    // Store cancel reason in order notes
+    const { supabase } = await import("@/lib/supabase");
+    await supabase.from("orders").update({status:"Cancelled",notes:reason+(contactedCustomer?" [Customer contacted]":""),updated_at:new Date().toISOString()}).eq("id",id);
+  };
   const parseBulk=(t)=>{setBParsed(t.trim().split("\n").filter(l=>l.trim()).map((line,i)=>{const p=line.split(",").map(x=>x.trim());return p.length<3?{line:i+1,err:"Need: Name, Category, Price",raw:line}:{line:i+1,name:p[0],category:p[1],price:p[2],description:p[3]||"",emoji:p[4]||"",ok:true};}));};
   const importBulk=async()=>{const items=bParsed.filter(x=>x.ok).map(x=>({id:Date.now()+Math.random(),name:x.name,category:x.category,price:x.price,description:x.description,emoji:x.emoji,available:true,outOfStock:false}));setMenuItems(p=>[...p,...items]);setBulk("");setBParsed([]);setTab("manage");await bulkInsertMenuItems(items);};
   return (<div className="adm">
@@ -673,7 +717,7 @@ function AdminPanel({ menuItems, setMenuItems, orders, setOrders, onLogout, sett
         <button className={`atab ${tab==="bulk"?"active":""}`} onClick={()=>setTab("bulk")}>Bulk Add</button>
         <button className={`atab ${tab==="settings"?"active":""}`} onClick={()=>setTab("settings")}>Settings</button>
       </div>
-      {tab==="orders"&&<OrderDashboard orders={orders} onAdvance={handleAdvance} onRemove={handleRemove} onClearDone={handleClearDone}/>}
+      {tab==="orders"&&<OrderDashboard orders={orders} onAdvance={handleAdvance} onRemove={handleRemove} onCancel={handleCancel}/>}
       {tab==="settings"&&<SettingsPanel settings={settings} setSettings={setSettings} adminPassword={adminPassword} setAdminPassword={setAdminPassword}/>}
       {tab==="manage"&&<><div className="astats"><div className="asc"><div className="asl">Total</div><div className="asv">{menuItems.length}</div></div><div className="asc"><div className="asl">Available</div><div className="asv">{avail}</div></div><div className="asc"><div className="asl">Out of Stock</div><div className="asv">{outOfStockCount}</div></div><div className="asc"><div className="asl">Hidden</div><div className="asv">{menuItems.filter(i=>!i.available).length}</div></div></div>
         <div className="tw"><div className="thb"><h2>Menu Items</h2><div className="tfs"><select className="fsel" value={fCat} onChange={e=>setFCat(e.target.value)}><option value="All">All Categories</option>{cats.map(c=><option key={c}>{c}</option>)}</select><select className="fsel" value={fSt} onChange={e=>setFSt(e.target.value)}><option value="All">All Status</option><option>Available</option><option>Unavailable</option><option>Out of Stock</option></select><button className="abtn" onClick={()=>setShowAdd(true)}>+ Add</button></div></div>
@@ -683,32 +727,35 @@ function AdminPanel({ menuItems, setMenuItems, orders, setOrders, onLogout, sett
     </div>
     {/* Add Item Modal — improved with category text input, sort order (#2) */}
     {showAdd&&<div className="mov"><div className="modal"><h2>Add Menu Item</h2>
-      <div className="fr"><div className="fg"><label className="fl">Name *</label><input className="fi" value={newItem.name} onChange={e=>setNewItem({...newItem,name:e.target.value})}/></div><div className="fg"><label className="fl">Emoji</label><input className="fi" value={newItem.emoji} onChange={e=>setNewItem({...newItem,emoji:e.target.value})}/></div></div>
+      <div className="fg"><label className="fl">Name *</label><input className="fi" value={newItem.name} onChange={e=>setNewItem({...newItem,name:e.target.value})}/></div>
       <div className="fr"><div className="fg"><label className="fl">Category *</label>
         {cats.length>0?<><select className="fi" value={newItem.category} onChange={e=>setNewItem({...newItem,category:e.target.value})} style={{marginBottom:".3rem"}}><option value="">Select existing…</option>{cats.map(c=><option key={c}>{c}</option>)}</select><input className="fi" value={newCatInput} onChange={e=>setNewCatInput(e.target.value)} placeholder="Or type new category"/></>:<input className="fi" value={newCatInput} onChange={e=>setNewCatInput(e.target.value)} placeholder="Category name"/>}
       </div><div className="fg"><label className="fl">Price *</label><input className="fi" value={newItem.price} onChange={e=>setNewItem({...newItem,price:e.target.value})} placeholder="e.g. 250 or 150/280"/></div></div>
       <div className="fr"><div className="fg"><label className="fl">Description</label><input className="fi" value={newItem.description} onChange={e=>setNewItem({...newItem,description:e.target.value})}/></div><div className="fg"><label className="fl">Sort Order</label><input className="fi" type="number" value={newItem.sortOrder} onChange={e=>setNewItem({...newItem,sortOrder:e.target.value})} placeholder="Lower = first"/></div></div>
       <div className="macts"><button className="bg" onClick={()=>{setShowAdd(false);setNewCatInput("");}}>Cancel</button><button className="ba" onClick={addIt} disabled={!newItem.name||!newItem.price}>Add Item</button></div>
     </div></div>}
-    {editItem&&<EditItemModal item={editItem} onSave={saveEdit} onClose={()=>setEditItem(null)}/>}
+    {editItem&&<EditItemModal item={editItem} allCategories={cats} onSave={saveEdit} onClose={()=>setEditItem(null)}/>}
     {delPwdModal&&<div className="mov"><div className="modal"><h2>Confirm Delete</h2><p style={{color:"var(--m)",fontSize:".83rem",marginBottom:".9rem"}}>Enter admin password to delete this item</p>{delPwdErr&&<div className="aerr" style={{marginBottom:".45rem"}}>Incorrect password</div>}<div className="fg"><label className="fl">Password</label><input className="fi" type="password" value={delPwd} onChange={e=>{setDelPwd(e.target.value);setDelPwdErr(false);}} onKeyDown={e=>e.key==="Enter"&&handleDelPwd()}/></div><div className="macts"><button className="bg" onClick={()=>setDelPwdModal(null)}>Cancel</button><button className="ba" onClick={handleDelPwd}>Delete</button></div></div></div>}
   </div>);
 }
 
 // ── EDIT ITEM MODAL — now includes sort order ──
-function EditItemModal({ item, onSave, onClose }) {
+function EditItemModal({ item, allCategories, onSave, onClose }) {
   const [name,setName]=useState(item.name);const [desc,setDesc]=useState(item.description||"");
-  const [price,setPrice]=useState(item.price);const [emoji,setEmoji]=useState(item.emoji||"🍽");
+  const [price,setPrice]=useState(item.price);
+  const [category,setCategory]=useState(item.category);const [newCat,setNewCat]=useState("");
   const [sortOrder,setSortOrder]=useState(item.sortOrder||"");
   const [popupType,setPopupType]=useState(item.popup||"none");
   const [choices,setChoices]=useState(item.popup==="choices"?(item.choices||[]).map(c=>({...c})):item.popup==="addon"?(item.addons||[]).map(a=>({...a})):[]);
   const addChoice=()=>setChoices(p=>[...p,{label:"",price:0}]);const removeChoice=(i)=>setChoices(p=>p.filter((_,j)=>j!==i));
   const updateChoice=(i,field,val)=>setChoices(p=>p.map((c,j)=>j===i?{...c,[field]:field==="price"?Number(val)||0:val}:c));
-  const save=()=>{if(!name.trim()||!price.trim())return;const base={...item,name:name.trim(),description:desc.trim(),price:price.trim(),emoji,sortOrder:parseInt(sortOrder)||item.sortOrder||item.id};if(popupType==="none"){delete base.popup;delete base.choices;delete base.addons;}if(popupType==="halfFull"){base.popup="halfFull";delete base.choices;delete base.addons;}if(popupType==="dryGravy"){base.popup="dryGravy";delete base.choices;delete base.addons;}if(popupType==="choices"){base.popup="choices";base.choices=choices.filter(c=>c.label.trim());delete base.addons;}if(popupType==="addon"){base.popup="addon";base.addons=choices.filter(c=>c.label.trim());delete base.choices;}onSave(base);};
+  const finalCat = newCat.trim() || category;
+  const save=()=>{if(!name.trim()||!price.trim())return;const base={...item,name:name.trim(),category:finalCat,description:desc.trim(),price:price.trim(),sortOrder:parseInt(sortOrder)||item.sortOrder||item.id};if(popupType==="none"){delete base.popup;delete base.choices;delete base.addons;}if(popupType==="halfFull"){base.popup="halfFull";delete base.choices;delete base.addons;}if(popupType==="dryGravy"){base.popup="dryGravy";delete base.choices;delete base.addons;}if(popupType==="choices"){base.popup="choices";base.choices=choices.filter(c=>c.label.trim());delete base.addons;}if(popupType==="addon"){base.popup="addon";base.addons=choices.filter(c=>c.label.trim());delete base.choices;}onSave(base);};
   const isList=popupType==="choices"||popupType==="addon";
   return(<div className="mov"><div className="modal" style={{maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
     <h2>Edit Item</h2>
-    <div className="fr"><div className="fg"><label className="fl">Name</label><input className="fi" value={name} onChange={e=>setName(e.target.value)}/></div><div className="fg"><label className="fl">Emoji</label><input className="fi" value={emoji} onChange={e=>setEmoji(e.target.value)}/></div></div>
+    <div className="fg"><label className="fl">Name</label><input className="fi" value={name} onChange={e=>setName(e.target.value)}/></div>
+    <div className="fg"><label className="fl">Category</label><select className="fi" value={category} onChange={e=>setCategory(e.target.value)} style={{marginBottom:".3rem"}}>{allCategories.map(c=><option key={c}>{c}</option>)}</select><input className="fi" value={newCat} onChange={e=>setNewCat(e.target.value)} placeholder="Or type new category"/></div>
     <div className="fr"><div className="fg"><label className="fl">Price (₹)</label><input className="fi" value={price} onChange={e=>setPrice(e.target.value)}/></div><div className="fg"><label className="fl">Sort Order</label><input className="fi" type="number" value={sortOrder} onChange={e=>setSortOrder(e.target.value)} placeholder="Lower = first"/></div></div>
     <div className="fg"><label className="fl">Description</label><input className="fi" value={desc} onChange={e=>setDesc(e.target.value)}/></div>
     <div className="fg"><label className="fl">Variation Type</label><div style={{display:"flex",gap:".35rem",flexWrap:"wrap"}}>
@@ -732,7 +779,7 @@ export default function GrillinApp() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [adminPassword, setAdminPassword] = useState(DEFAULT_ADMIN_PASSWORD);
-  const [settings, setSettings] = useState({ deliveryMinEnabled:true, deleteProtection:true, offerEnabled:false, offerPercent:10, orderTimingEnabled:false, openTime:"10:00", closeTime:"23:00", autoClear:"off" });
+  const [settings, setSettings] = useState({ deliveryMinEnabled:true, deleteProtection:true, offerEnabled:false, offerPercent:10, orderTimingEnabled:false, openTime:"10:00", closeTime:"23:00", autoClear:"off", deliveryRadius:3 });
   useEffect(() => {
     async function loadData() {
       const [menu, ords, dbSettings] = await Promise.all([fetchMenuItems(), fetchOrders(), fetchSettings()]);
@@ -747,6 +794,7 @@ export default function GrillinApp() {
         openTime:dbSettings.open_time||"10:00",
         closeTime:dbSettings.close_time||"23:00",
         autoClear:dbSettings.auto_clear||"off",
+        deliveryRadius:parseInt(dbSettings.delivery_radius)||3,
       };
       setSettings(s);
       // Auto-clear old done orders on load
@@ -777,7 +825,7 @@ export default function GrillinApp() {
   useEffect(() => {
     const channel = subscribeToOrders((payload) => {
       if (payload.eventType === "INSERT") { setOrders(prev => { if (prev.find(o => o.id === payload.new.id)) return prev; const n={id:payload.new.id,num:payload.new.num,customer:payload.new.customer,phone:payload.new.phone,address:payload.new.address,addr:payload.new.addr,type:payload.new.type,notes:payload.new.notes||"",items:payload.new.items||[],total:parseFloat(payload.new.total),status:payload.new.status,placedAt:new Date(payload.new.placed_at)}; startAlarm(n); return [n,...prev]; }); }
-      else if (payload.eventType === "UPDATE") { setOrders(prev => prev.map(o => o.id === payload.new.id ? {...o, status:payload.new.status} : o)); }
+      else if (payload.eventType === "UPDATE") { const r=payload.new; setOrders(prev => prev.map(o => o.id === r.id ? {...o, status:r.status, ...(r.status==="Cancelled"?{cancelReason:r.notes||"",contactedCustomer:(r.notes||"").includes("[Customer contacted]")}:{})} : o)); }
       else if (payload.eventType === "DELETE") { setOrders(prev => prev.filter(o => o.id !== payload.old.id)); }
     });
     return () => { channel.unsubscribe(); };

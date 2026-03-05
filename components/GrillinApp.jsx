@@ -75,7 +75,7 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 .nav{padding:.85rem .5rem .5rem;display:flex;align-items:center;justify-content:space-between}
 @media(max-width:700px){.nav{padding:.85rem 1.25rem .5rem}}
 .nav-logo img{height:120px;width:auto;object-fit:contain;display:block}
-@media(max-width:580px){.nav-logo img{height:80px}}
+@media(max-width:580px){.nav-logo img{height:100px}}
 .cart-pill{display:flex;align-items:center;gap:.45rem;background:var(--a);color:white;border:none;border-radius:26px;padding:.5rem 1.1rem;font-family:var(--font);font-size:.85rem;font-weight:700;cursor:pointer;position:relative;transition:all .15s}
 .cart-pill:hover{background:var(--a2)}
 .cart-pill svg{flex-shrink:0}
@@ -131,9 +131,7 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 @media(max-width:900px){.main-col{padding:0}.cpanel{display:none!important}.cpanel-overlay{display:none!important}}
 
 /* ── MENU ── */
-.menu-area{padding:0 .5rem 2rem;min-height:100%;display:flex;flex-direction:column}
-.menu-area .menu-content{flex:1}
-.menu-area .contact-footer{margin-top:auto}
+.menu-area{padding:0 .5rem 2rem}
 @media(max-width:700px){.menu-area{padding:0 1.25rem 2rem}}
 .snote{font-size:.78rem;color:var(--m);margin-bottom:.7rem}
 .sec-head{font-family:var(--font);font-size:1.3rem;font-weight:800;color:var(--a);margin:1.8rem 0 .85rem;padding-bottom:.5rem;border-bottom:2px solid rgba(220,38,38,.2);letter-spacing:-.01em}
@@ -211,12 +209,12 @@ html,body{background:var(--bg);color:var(--t);font-family:var(--font);-webkit-fo
 .chkbtn:hover:not(:disabled){background:var(--a2)}.chkbtn:disabled{opacity:.3;cursor:not-allowed}
 
 /* Footer */
-.access-footer{display:block;width:100%;text-align:center;padding:.6rem;background:transparent;border:none;border-top:1px solid var(--b);color:var(--m);font-family:var(--font);font-size:.68rem;cursor:pointer;margin-top:1.5rem;transition:color .15s}
-.access-footer:hover{color:var(--t)}
-.contact-footer{border-top:1px solid var(--b);padding:1.2rem;margin-top:1.5rem;text-align:center}
-.contact-footer a{color:var(--t2);text-decoration:none;font-size:.78rem;font-weight:500}.contact-footer a:hover{text-decoration:underline;color:var(--t)}
-.contact-row{display:flex;align-items:center;justify-content:center;gap:.5rem;margin-bottom:.35rem;font-size:.78rem;color:var(--m)}
-.contact-row a{color:var(--t2);text-decoration:none}.contact-row a:hover{text-decoration:underline;color:var(--t)}
+.access-footer{display:block;width:100%;text-align:center;padding:.5rem;background:transparent;border:none;color:var(--m);font-family:var(--font);font-size:.62rem;cursor:pointer;margin-top:.5rem;transition:color .15s;opacity:.5}
+.access-footer:hover{color:var(--t);opacity:1}
+.contact-footer{border:none;padding:2.5rem 1rem 1.5rem;text-align:center}
+.contact-footer a{color:var(--m);text-decoration:none;font-size:.72rem;font-weight:400}.contact-footer a:hover{text-decoration:underline;color:var(--t2)}
+.contact-row{display:flex;align-items:center;justify-content:center;gap:.5rem;margin-bottom:.3rem;font-size:.72rem;color:var(--m);opacity:.5}
+.contact-row a{color:var(--m);text-decoration:none}.contact-row a:hover{text-decoration:underline;color:var(--t2)}
 
 /* Drawer (mobile cart) */
 .dov{position:fixed;inset:0;z-index:160;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .2s}.dov.open{opacity:1;pointer-events:all}
@@ -468,7 +466,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
         <div className="sticky-top">
           <nav className="nav">
             <div className="nav-logo"><img src={LOGO_SRC} alt="Grillin'" onError={e=>{e.target.style.display='none'}}/></div>
-            {totalItems>0&&<button className="cart-pill" onClick={()=>{if(window.innerWidth>900)setSideCartOpen(true);else setDrawerOpen(true);}}><CartIcon/> ₹{total.toFixed(0)}<span className="cart-badge">{totalItems}</span></button>}
+            <button className="cart-pill" onClick={()=>{if(window.innerWidth>900)setSideCartOpen(true);else setDrawerOpen(true);}}><CartIcon/>{totalItems>0?<> ₹{total.toFixed(0)}<span className="cart-badge">{totalItems}</span></>:" Cart"}</button>
           </nav>
           <div className="search-wrap"><div className="search-box"><span className="search-icon"><SearchIcon/></span><input placeholder="What are you craving?" value={search} onChange={e=>setSearch(e.target.value)}/>{search&&<button className="search-clear" onClick={()=>setSearch("")}><ClearIcon/></button>}</div></div>
           <div className="cat-strip">
@@ -480,7 +478,6 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
         {/* SCROLLABLE MENU */}
         <div className="menu-scroll" ref={menuScrollEl}>
           <div className="menu-area">
-            <div className="menu-content">
             {search&&<div className="snote">{filtered.length} result{filtered.length!==1?"s":""} for &ldquo;{search}&rdquo;</div>}
             {Object.entries(grouped).map(([cat,items])=>(<div key={cat} id={`cat-${cat.replace(/\s+/g,"-")}`}>
               <div className="sec-head">{cat}</div>
@@ -511,7 +508,6 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
               </div>
             </div>))}
             {filtered.length===0&&<div style={{textAlign:"center",padding:"3rem",color:"var(--m)"}}>No items found</div>}
-            </div>
             <div className="contact-footer">
               <div className="contact-row">📞 <a href="tel:9901538782">9901538782</a> · <a href="tel:7259020939">7259020939</a></div>
               <div className="contact-row">📍 <a href="https://maps.app.goo.gl/dvy2KWqhZ542ABgE8?g_st=ic" target="_blank" rel="noopener noreferrer">Vignan Nagar Main Rd, Bangalore</a></div>

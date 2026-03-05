@@ -69,6 +69,10 @@ const PhoneIcon = () => (
     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
   </svg>
 );
+const FoodTypeDot = ({type}) => {
+  const color = type === "veg" ? "#22c55e" : "#dc2626";
+  return <span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:14,height:14,border:`1.5px solid ${color}`,borderRadius:2,flexShrink:0}}><span style={{width:7,height:7,borderRadius:"50%",background:color}}/></span>;
+};
 
 const S = `
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&display=swap');
@@ -438,7 +442,8 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
   const total = afterDiscount + gstAmt;
   const totalItems = cart.reduce((s,c)=>s+c.qty,0);
   const deliveryShort = form.type==="Delivery" && subtotal<DELIVERY_MIN;
-  const canPlace = storeOpen&&form.phone.trim()&&form.name.trim()&&!deliveryShort&&(form.type==="Pickup"||addrComplete);
+  const oosInCart = cart.some(c => { const mi = menuItems.find(m=>m.id===c.id); return mi && (mi.outOfStock || !mi.available); });
+  const canPlace = storeOpen&&!oosInCart&&form.phone.trim()&&form.name.trim()&&!deliveryShort&&(form.type==="Pickup"||addrComplete);
   const placeOrder = async () => {
     if (!storeOpen) return;
     const order = {id:Date.now(),num:orderNum,customer:form.name,phone:form.phone,address:form.type==="Delivery"?fullAddress(form.addr):null,addr:form.type==="Delivery"?form.addr:null,type:form.type,notes:form.type==="Delivery"&&form.addr.landmark?form.addr.landmark:"",items:cart.map(c=>({name:cleanName(c.name),variant:c.variant,qty:c.qty,unitPrice:c.unitPrice,itemNote:c.itemNote||""})),total,status:"New",placedAt:new Date()};
@@ -490,7 +495,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
                   <div className="mc-info">
                     <div className="mc-name">{cleanName(item.name)}</div>
                     {item.description&&<div className="mc-desc">{item.description}</div>}
-                    <div className="mc-price">{displayPrice(item)}</div>
+                    <div style={{display:"flex",alignItems:"center",gap:".35rem"}}><FoodTypeDot type={item.foodType}/><div className="mc-price">{displayPrice(item)}</div></div>
                     {tag&&!item.outOfStock&&<div className="mc-tag">{tag}</div>}
                   </div>
                   <div className="mc-right">
@@ -550,6 +555,7 @@ function CustomerView({ menuItems, search, setSearch, onOrderPlaced, orders, onA
         <div className="fg" style={{marginBottom:0}}><label className="fl">Address Instructions</label><input className="fi" value={form.addr.landmark} onChange={e=>setAddr("landmark",e.target.value)} placeholder="Gate code, directions, etc."/></div></div>
       </>}
       {deliveryShort&&<div className="del-warn">⚠️ Minimum delivery order is <strong>₹{DELIVERY_MIN}</strong> — add ₹{Math.ceil(DELIVERY_MIN-subtotal)} more</div>}
+      {oosInCart&&<div className="del-warn">⚠️ Some items in your cart are no longer available. Please remove them to proceed.</div>}
       <div className="osb">{cart.map(i=><div key={i.key} className="osi"><span>{cleanName(i.name)}{i.variant?` (${i.variant})`:""} ×{i.qty}{i.itemNote?` — ${i.itemNote}`:""}</span><span>₹{(i.unitPrice*i.qty).toFixed(0)}</span></div>)}
         {discountPct>0&&<div className="osi" style={{color:"var(--g)"}}><span>Discount ({discountPct}%)</span><span>-₹{discountAmt.toFixed(0)}</span></div>}
         <div className="osi"><span>GST (5%)</span><span>₹{gstAmt.toFixed(0)}</span></div>
@@ -569,7 +575,15 @@ function OrderDashboard({ orders, onAdvance, onRemove, onCancel }) {
   const [contacted, setContacted] = useState(false);
   const CANCEL_REASONS = ["Item unavailable","Customer asked to cancel","Restaurant busy","No delivery person"];
   const counts = useMemo(()=>ALL_STATUSES.reduce((acc,s)=>({...acc,[s]:orders.filter(o=>o.status===s).length}),{}), [orders]);
-  const displayed = useMemo(()=>{const o=filter==="All"?orders:orders.filter(o=>o.status===filter);return [...o].sort((a,b)=>new Date(b.placedAt)-new Date(a.placedAt));},[orders,filter]);
+  const displayed = useMemo(()=>{
+    const o=filter==="All"?orders:orders.filter(o=>o.status===filter);
+    const priority={New:0,Preparing:1,Done:2,Cancelled:3};
+    return [...o].sort((a,b)=>{
+      const pa=priority[a.status]??9, pb=priority[b.status]??9;
+      if(pa!==pb) return pa-pb;
+      return new Date(b.placedAt)-new Date(a.placedAt);
+    });
+  },[orders,filter]);
   const handleCancel = () => {
     if (!cancelReason) return;
     onCancel(cancelModal, cancelReason, contacted);
@@ -605,7 +619,6 @@ function OrderDashboard({ orders, onAdvance, onRemove, onCancel }) {
         <div className="ord-foot"><div className="ord-total">₹{order.total.toFixed(0)}</div><div className="ord-actions">
           {nextStatus&&order.status!=="Cancelled"&&<button className="ord-next-btn" style={{background:btnColor}} onClick={()=>onAdvance(order.id,nextStatus)}>{nextStatus==="Preparing"?"Start Preparing":"Mark Done"}</button>}
           {(order.status==="New"||order.status==="Preparing")&&<button className="ord-del-btn" onClick={()=>{setCancelModal(order.id);setCancelReason("");setContacted(false);}}>Cancel</button>}
-          {order.status==="Cancelled"&&<button className="ord-del-btn" onClick={()=>onRemove(order.id)}>✕</button>}
         </div></div>
       </div>);})}</div>}
     {/* Cancel modal */}
@@ -675,7 +688,7 @@ function AdminPanel({ menuItems, setMenuItems, orders, setOrders, onLogout, sett
   const [fCat,setFCat]=useState("All"); const [fSt,setFSt]=useState("All");
   const [showAdd,setShowAdd]=useState(false); const [editItem,setEditItem]=useState(null);
   const [bulk,setBulk]=useState(""); const [bParsed,setBParsed]=useState([]);
-  const [newItem,setNewItem]=useState({name:"",category:"",price:"",description:"",emoji:"",sortOrder:""});
+  const [newItem,setNewItem]=useState({name:"",category:"",price:"",description:"",foodType:"nonveg",sortOrder:""});
   const [newCatInput,setNewCatInput]=useState("");
   const [delPwdModal, setDelPwdModal] = useState(null); const [delPwd, setDelPwd] = useState(""); const [delPwdErr, setDelPwdErr] = useState(false);
   const cats=[...new Set(menuItems.map(i=>i.category))];
@@ -693,10 +706,10 @@ function AdminPanel({ menuItems, setMenuItems, orders, setOrders, onLogout, sett
   const addIt=async()=>{
     if(!newItem.name||!newItem.price)return;
     const cat = newCatInput.trim() || newItem.category || cats[0] || "Uncategorized";
-    const item={name:newItem.name,category:cat,price:newItem.price,description:newItem.description||"",emoji:newItem.emoji||"🍽",available:true,outOfStock:false,sortOrder:parseInt(newItem.sortOrder)||Date.now(),id:Date.now()};
+    const item={name:newItem.name,category:cat,price:newItem.price,description:newItem.description||"",foodType:newItem.foodType||"nonveg",available:true,outOfStock:false,sortOrder:parseInt(newItem.sortOrder)||Date.now(),id:Date.now()};
     const saved = await insertMenuItem(item);
     if(saved) setMenuItems(p=>[...p,saved]); else setMenuItems(p=>[...p,item]);
-    setNewItem({name:"",category:"",price:"",description:"",emoji:"",sortOrder:""});setNewCatInput("");setShowAdd(false);
+    setNewItem({name:"",category:"",price:"",description:"",foodType:"nonveg",sortOrder:""});setNewCatInput("");setShowAdd(false);
   };
   const handleAdvance=async(id,ns)=>{setOrders(p=>p.map(o=>o.id===id?{...o,status:ns}:o));await updateOrderStatus(id,ns);};
   const handleRemove=async(id)=>{setOrders(p=>p.filter(o=>o.id!==id));await deleteOrder(id);};
@@ -718,7 +731,7 @@ function AdminPanel({ menuItems, setMenuItems, orders, setOrders, onLogout, sett
       {tab==="manage"&&<><div className="astats"><div className="asc"><div className="asl">Total</div><div className="asv">{menuItems.length}</div></div><div className="asc"><div className="asl">Available</div><div className="asv">{avail}</div></div><div className="asc"><div className="asl">Out of Stock</div><div className="asv">{outOfStockCount}</div></div><div className="asc"><div className="asl">Hidden</div><div className="asv">{menuItems.filter(i=>!i.available).length}</div></div></div>
         <div className="tw"><div className="thb"><h2>Menu Items</h2><div className="tfs"><select className="fsel" value={fCat} onChange={e=>setFCat(e.target.value)}><option value="All">All Categories</option>{cats.map(c=><option key={c}>{c}</option>)}</select><select className="fsel" value={fSt} onChange={e=>setFSt(e.target.value)}><option value="All">All Status</option><option>Available</option><option>Unavailable</option><option>Out of Stock</option></select><button className="abtn" onClick={()=>setShowAdd(true)}>+ Add</button></div></div>
           <div className="tscr"><table><thead><tr><th>Item</th><th>Category</th><th>Price</th><th>Sort</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-            {filtered.map(item=><tr key={item.id}><td><strong>{cleanName(item.name)}</strong>{item.description&&<div style={{fontSize:".7rem",color:"var(--m)",marginTop:2}}>{item.description}</div>}</td><td style={{color:"var(--m)",fontSize:".76rem"}}>{item.category}</td><td><strong style={{color:"var(--a)"}}>₹{item.price}</strong></td><td style={{color:"var(--m)",fontSize:".72rem"}}>{item.sortOrder||"-"}</td><td><span className={`bdg ${item.outOfStock?"boos":item.available?"bon":"boff"}`}>{item.outOfStock?"OOS":item.available?"On":"Off"}</span></td><td><button className="tedit" onClick={()=>setEditItem(item)}>Edit</button><button className="ttog" onClick={()=>tog(item.id)}>{item.available?"Hide":"Show"}</button><button className="ttog toos" onClick={()=>togOos(item.id)}>{item.outOfStock?"Restock":"OOS"}</button><button className="tdel" onClick={()=>requestDelete(item.id)}>Del</button></td></tr>)}</tbody></table></div></div></>}
+            {filtered.map(item=><tr key={item.id}><td><strong>{cleanName(item.name)}</strong>{item.description&&<div style={{fontSize:".7rem",color:"var(--m)",marginTop:2}}>{item.description}</div>}</td><td style={{color:"var(--m)",fontSize:".76rem"}}>{item.category}</td><td><strong style={{color:"var(--a)"}}>₹{item.price}</strong></td><td style={{color:"var(--m)",fontSize:".72rem"}}>{item.sortOrder||"-"}</td><td><span className={`bdg ${item.outOfStock?"boos":item.available?"bon":"boff"}`}>{item.outOfStock?"OOS":item.available?"On":"Off"}</span></td><td><button className="tdel" onClick={()=>requestDelete(item.id)}>Del</button><button className="tedit" onClick={()=>setEditItem(item)}>Edit</button><button className="ttog" onClick={()=>tog(item.id)}>{item.available?"Hide":"Show"}</button><button className="ttog toos" onClick={()=>togOos(item.id)}>{item.outOfStock?"Restock":"OOS"}</button></td></tr>)}</tbody></table></div></div></>}
       {tab==="bulk"&&<div className="bulk"><h2>Bulk Add</h2><p>One item per line: <code>Name, Category, Price, Description, Emoji</code></p><textarea className="bta" value={bulk} onChange={e=>{setBulk(e.target.value);if(e.target.value.trim())parseBulk(e.target.value);else setBParsed([]);}} placeholder="Chicken Wings, Starters, 320, Crispy wings"/>{bParsed.length>0&&<div className="bprev">{bParsed.map(p=><div key={p.line} className="bpi"><span className={p.ok?"pok":"perr"}>{p.ok?"✓":"✗"}</span><span>{p.ok?`${p.name} — ${p.category} — ₹${p.price}`:`Line ${p.line}: ${p.err}`}</span></div>)}</div>}<div className="bacts"><button className="ba" onClick={importBulk} disabled={!bParsed.some(p=>p.ok)}>Import</button><button className="bg" onClick={()=>{setBulk("");setBParsed([]);}}>Clear</button>{bParsed.length>0&&<span className="bnote">{bParsed.filter(p=>p.ok).length} valid</span>}</div></div>}
     </div>
     {/* Add Item Modal — improved with category text input, sort order (#2) */}
@@ -728,6 +741,7 @@ function AdminPanel({ menuItems, setMenuItems, orders, setOrders, onLogout, sett
         {cats.length>0?<><select className="fi" value={newItem.category} onChange={e=>setNewItem({...newItem,category:e.target.value})} style={{marginBottom:".3rem"}}><option value="">Select existing…</option>{cats.map(c=><option key={c}>{c}</option>)}</select><input className="fi" value={newCatInput} onChange={e=>setNewCatInput(e.target.value)} placeholder="Or type new category"/></>:<input className="fi" value={newCatInput} onChange={e=>setNewCatInput(e.target.value)} placeholder="Category name"/>}
       </div><div className="fg"><label className="fl">Price *</label><input className="fi" value={newItem.price} onChange={e=>setNewItem({...newItem,price:e.target.value})} placeholder="e.g. 250 or 150/280"/></div></div>
       <div className="fr"><div className="fg"><label className="fl">Description</label><input className="fi" value={newItem.description} onChange={e=>setNewItem({...newItem,description:e.target.value})}/></div><div className="fg"><label className="fl">Sort Order</label><input className="fi" type="number" value={newItem.sortOrder} onChange={e=>setNewItem({...newItem,sortOrder:e.target.value})} placeholder="Lower = first"/></div></div>
+      <div className="fg"><label className="fl">Food Type</label><div style={{display:"flex",gap:".4rem"}}>{[["veg","Veg"],["nonveg","Non-Veg"]].map(([v,l])=><div key={v} onClick={()=>setNewItem({...newItem,foodType:v})} style={{flex:1,padding:".5rem",borderRadius:"var(--radius-sm)",border:`2px solid ${newItem.foodType===v?(v==="veg"?"#22c55e":"#dc2626"):"var(--b)"}`,background:newItem.foodType===v?"rgba(255,255,255,.03)":"var(--s2)",cursor:"pointer",textAlign:"center",fontSize:".8rem",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:".35rem"}}><FoodTypeDot type={v}/>{l}</div>)}</div></div>
       <div className="macts"><button className="bg" onClick={()=>{setShowAdd(false);setNewCatInput("");}}>Cancel</button><button className="ba" onClick={addIt} disabled={!newItem.name||!newItem.price}>Add Item</button></div>
     </div></div>}
     {editItem&&<EditItemModal item={editItem} allCategories={cats} onSave={saveEdit} onClose={()=>setEditItem(null)}/>}
@@ -741,12 +755,13 @@ function EditItemModal({ item, allCategories, onSave, onClose }) {
   const [price,setPrice]=useState(item.price);
   const [category,setCategory]=useState(item.category);const [newCat,setNewCat]=useState("");
   const [sortOrder,setSortOrder]=useState(item.sortOrder||"");
+  const [foodType,setFoodType]=useState(item.foodType||"nonveg");
   const [popupType,setPopupType]=useState(item.popup||"none");
   const [choices,setChoices]=useState(item.popup==="choices"?(item.choices||[]).map(c=>({...c})):item.popup==="addon"?(item.addons||[]).map(a=>({...a})):[]);
   const addChoice=()=>setChoices(p=>[...p,{label:"",price:0}]);const removeChoice=(i)=>setChoices(p=>p.filter((_,j)=>j!==i));
   const updateChoice=(i,field,val)=>setChoices(p=>p.map((c,j)=>j===i?{...c,[field]:field==="price"?Number(val)||0:val}:c));
   const finalCat = newCat.trim() || category;
-  const save=()=>{if(!name.trim()||!price.trim())return;const base={...item,name:name.trim(),category:finalCat,description:desc.trim(),price:price.trim(),sortOrder:parseInt(sortOrder)||item.sortOrder||item.id};if(popupType==="none"){delete base.popup;delete base.choices;delete base.addons;}if(popupType==="halfFull"){base.popup="halfFull";delete base.choices;delete base.addons;}if(popupType==="dryGravy"){base.popup="dryGravy";delete base.choices;delete base.addons;}if(popupType==="choices"){base.popup="choices";base.choices=choices.filter(c=>c.label.trim());delete base.addons;}if(popupType==="addon"){base.popup="addon";base.addons=choices.filter(c=>c.label.trim());delete base.choices;}onSave(base);};
+  const save=()=>{if(!name.trim()||!price.trim())return;const base={...item,name:name.trim(),category:finalCat,description:desc.trim(),price:price.trim(),foodType,sortOrder:parseInt(sortOrder)||item.sortOrder||item.id};if(popupType==="none"){delete base.popup;delete base.choices;delete base.addons;}if(popupType==="halfFull"){base.popup="halfFull";delete base.choices;delete base.addons;}if(popupType==="dryGravy"){base.popup="dryGravy";delete base.choices;delete base.addons;}if(popupType==="choices"){base.popup="choices";base.choices=choices.filter(c=>c.label.trim());delete base.addons;}if(popupType==="addon"){base.popup="addon";base.addons=choices.filter(c=>c.label.trim());delete base.choices;}onSave(base);};
   const isList=popupType==="choices"||popupType==="addon";
   return(<div className="mov"><div className="modal" style={{maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
     <h2>Edit Item</h2>
@@ -754,6 +769,7 @@ function EditItemModal({ item, allCategories, onSave, onClose }) {
     <div className="fg"><label className="fl">Category</label><select className="fi" value={category} onChange={e=>setCategory(e.target.value)} style={{marginBottom:".3rem"}}>{allCategories.map(c=><option key={c}>{c}</option>)}</select><input className="fi" value={newCat} onChange={e=>setNewCat(e.target.value)} placeholder="Or type new category"/></div>
     <div className="fr"><div className="fg"><label className="fl">Price (₹)</label><input className="fi" value={price} onChange={e=>setPrice(e.target.value)}/></div><div className="fg"><label className="fl">Sort Order</label><input className="fi" type="number" value={sortOrder} onChange={e=>setSortOrder(e.target.value)} placeholder="Lower = first"/></div></div>
     <div className="fg"><label className="fl">Description</label><input className="fi" value={desc} onChange={e=>setDesc(e.target.value)}/></div>
+    <div className="fg"><label className="fl">Food Type</label><div style={{display:"flex",gap:".4rem"}}>{[["veg","Veg"],["nonveg","Non-Veg"]].map(([v,l])=><div key={v} onClick={()=>setFoodType(v)} style={{flex:1,padding:".5rem",borderRadius:"var(--radius-sm)",border:`2px solid ${foodType===v?(v==="veg"?"#22c55e":"#dc2626"):"var(--b)"}`,background:foodType===v?"rgba(255,255,255,.03)":"var(--s2)",cursor:"pointer",textAlign:"center",fontSize:".8rem",fontWeight:600,display:"flex",alignItems:"center",justifyContent:"center",gap:".35rem"}}><FoodTypeDot type={v}/>{l}</div>)}</div></div>
     <div className="fg"><label className="fl">Variation Type</label><div style={{display:"flex",gap:".35rem",flexWrap:"wrap"}}>
       {[["none","None"],["halfFull","Half/Full"],["dryGravy","Dry/Gravy"],["choices","Choices"],["addon","Add-on"]].map(([val,lbl])=>
         <div key={val} onClick={()=>setPopupType(val)} style={{padding:".35rem .7rem",borderRadius:"var(--radius-sm)",border:`2px solid ${popupType===val?"var(--a)":"var(--b)"}`,background:popupType===val?"rgba(220,38,38,.06)":"var(--s2)",cursor:"pointer",fontSize:".75rem",fontWeight:700,textTransform:"uppercase",letterSpacing:".02em"}}>{lbl}</div>
